@@ -29,6 +29,9 @@ public class Playermovement : MonoBehaviour
     public float groundDistance = 0.4f;
     public LayerMask groundMask;
 
+    [Header("Animation")]
+    public Animator animator;
+
     private CharacterController controller;
     private Vector3 velocity;
     private bool isGrounded;
@@ -39,6 +42,11 @@ public class Playermovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         hasGroundCheck = groundCheck != null;
         
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
+
         // ❌ เอา Camera.main ออกไปเลย เพื่อลด Overhead ตอนเริ่มเกม (GameObject.FindObjectWithTag)
         // ✅ บังคับให้ตั้งค่าอ้างอิงผ่าน Inspector โดยตรง 
         if (cameraTransform == null)
@@ -141,12 +149,37 @@ public class Playermovement : MonoBehaviour
             
             float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : moveSpeed;
             controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
+
+            // กำหนดความเร็วแอนิเมชัน (เดิน = 0.5, วิ่ง = 1)
+            if (animator != null)
+            {
+                float speedParam = Input.GetKey(KeyCode.LeftShift) ? 1f : 0.5f;
+                animator.SetFloat("Speed", speedParam, 0.1f, Time.deltaTime);
+            }
+        }
+        else
+        {
+            if (animator != null)
+            {
+                animator.SetFloat("Speed", 0f, 0.1f, Time.deltaTime);
+            }
+        }
+
+        if (animator != null)
+        {
+            animator.SetBool("IsGrounded", isGrounded);
+            // animator.SetFloat("VerticalSpeed", velocity.y); // เอาคอมเมนต์ออกถ้าต้องการใช้ค่านี้กับแอนิเมชันตอนตก
         }
 
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             // ทำการหาค่าแรงกระโดด สามารถปรับไปทำใน Inspector ได้ถ้าต้องการให้เร็วขึ้นไปอีก
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            
+            if (animator != null)
+            {
+                animator.SetTrigger("Jump");
+            }
         }
 
         velocity.y += gravity * Time.deltaTime;
