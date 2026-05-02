@@ -20,6 +20,10 @@ public class PossessionManager : MonoBehaviour
     [SerializeField, Tooltip("เป้าหมายที่อยู่หน้ากล้องและใกล้ที่สุดในขณะนี้")]
     private PossessableEntity currentTarget;
 
+    [Header("UI Control")]
+    [SerializeField, Tooltip("สคริปต์ควบคุม UI ที่สร้างไว้ (ลากจาก Hierarchy มาใส่)")]
+    private PossessionUIController uiController;
+
     // --- Optimization Caching ---
     // ใช้ NonAlloc เพื่อลด Garbage Collection (Zero Allocation) ในแต่ละเฟรม
     // จองหน่วยความจำไว้ล่วงหน้า (สามารถปรับขนาด Array ได้ตามความเหมาะสมของเกม)
@@ -81,6 +85,21 @@ public class PossessionManager : MonoBehaviour
         }
 
         currentTarget = closestEntity;
+
+        // --- ควบคุม UI ---
+        if (uiController != null)
+        {
+            if (currentTarget != null)
+            {
+                // สั่งเปิด UI และส่งตำแหน่ง Transform ของเป้าหมายไปให้
+                uiController.ShowUI(currentTarget.transform);
+            }
+            else
+            {
+                // ถ้าไม่มีเป้าหมาย สั่งปิด UI
+                uiController.HideUI();
+            }
+        }
     }
 
     // ฟังก์ชันรับ Input เพื่อสิงร่าง
