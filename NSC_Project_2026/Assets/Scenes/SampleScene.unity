@@ -856,6 +856,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Playermovement
   isPossessed: 0
+  cameraLocked: 0
   moveSpeed: 6
   runSpeed: 10
   jumpHeight: 1.5
@@ -1041,6 +1042,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Playermovement
   isPossessed: 0
+  cameraLocked: 0
   moveSpeed: 6
   runSpeed: 10
   jumpHeight: 1.5
@@ -1306,6 +1308,10 @@ MonoBehaviour:
   currentBody: {fileID: 2073900280}
   playerCamera: {fileID: 330585545}
   uiController: {fileID: 1008094496}
+  useSmoothCameraTransition: 1
+  cameraTransitionDuration: 0.4
+  useCooldown: 0
+  cooldownDuration: 3
   maxDetectionDistance: 15
   aimRadius: 1.5
   possessableLayer:
@@ -1426,6 +1432,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Playermovement
   isPossessed: 0
+  cameraLocked: 0
   moveSpeed: 6
   runSpeed: 10
   jumpHeight: 1.5
@@ -1577,6 +1584,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Playermovement
   isPossessed: 1
+  cameraLocked: 0
   moveSpeed: 6
   runSpeed: 10
   jumpHeight: 1.5
