@@ -193,7 +193,12 @@ public class PossessionUIController : MonoBehaviour
     // --- ฟังก์ชันคำนวณตำแหน่งพิกัดระดับ Extreme Optimization ---
     private void UpdateUIPosition()
     {
-        Vector3 worldPos = currentTarget.position + worldOffset;
+        // ใช้ lossyScale ของเป้าหมายมาคูณ worldOffset
+        // ตัวใหญ่ (Scale สูง) = UI ลอยสูงขึ้น, ตัวเล็ก (Scale ต่ำ) = UI ลอยต่ำลง
+        float targetScale = currentTarget.lossyScale.y;
+        Vector3 scaledOffset = worldOffset * targetScale;
+        
+        Vector3 worldPos = currentTarget.position + scaledOffset;
         
         // 1. ถ้าใช้ Canvas แบบ World Space
         if (isWorldSpaceCanvas)

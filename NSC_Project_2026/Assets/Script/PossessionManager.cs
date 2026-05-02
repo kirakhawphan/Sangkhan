@@ -80,9 +80,16 @@ public class PossessionManager : MonoBehaviour
             
             if (entity != null)
             {
-                // ตรวจสอบว่าไม่ใช่ตัวเอง
-                if (currentBody != null && entity.gameObject == currentBody.gameObject)
-                    continue;
+                // ตรวจสอบว่าไม่ใช่ตัวเอง (ตรวจสอบทั้ง GameObject และ Hierarchy แม่ลูก)
+                if (currentBody != null)
+                {
+                    if (entity.gameObject == currentBody.gameObject || 
+                        entity.transform.IsChildOf(currentBody.transform) || 
+                        currentBody.transform.IsChildOf(entity.transform))
+                    {
+                        continue;
+                    }
+                }
 
                 float distance = hitResults[i].distance;
                 if (distance < closestDistance)
