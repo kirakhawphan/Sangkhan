@@ -4,41 +4,55 @@ using UnityEngine;
 public class Playermovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed = 6f;
-    public float runSpeed = 10f;
-    public float jumpHeight = 1.5f;
-    public float gravity = -9.81f;
-    public float turnSmoothTime = 0.1f;
-    private float turnSmoothVelocity;
-
-    [Header("Camera Control")]
-    public Transform cameraTransform;
-    public Transform cameraTarget; // จุดอ้างอิงให้กล้องหมุนรอบ (ใส่เป็นกระดูกไหล่/หน้าอกได้) ถ้าว่างไว้จะใช้จุดกึ่งกลางโมเดล + targetOffset
-    public float mouseSensitivityX = 3f;
-    public float mouseSensitivityY = 3f;
-    public float distance = 5f;
-    public Vector3 targetOffset = new Vector3(0, 1.5f, 0); // จุดกึ่งกลางที่กล้องจะมอง 
+    [SerializeField] private float moveSpeed = 6f;
+    [SerializeField] private float runSpeed = 10f;
+    [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private float turnSmoothTime = 0.1f;
     
-    private float currentX = 0f;
-    private float currentY = 0f;
-    public float minYAngle = -20f;
-    public float maxYAngle = 80f;
+    [Header("Camera Control")]
+    [SerializeField] private Transform cameraTransform;
+    [SerializeField] private Transform cameraTarget; // จุดอ้างอิงให้กล้องหมุนรอบ (ใส่เป็นกระดูกไหล่/หน้าอกได้)
+    [SerializeField] private float mouseSensitivityX = 3f;
+    [SerializeField] private float mouseSensitivityY = 3f;
+    [SerializeField] private float distance = 5f;
+    [SerializeField] private Vector3 targetOffset = new Vector3(0, 1.5f, 0); 
+    [SerializeField] private float minYAngle = -20f;
+    [SerializeField] private float maxYAngle = 80f;
 
     [Header("Ground Check")]
-    public Transform groundCheck;
-    public float groundDistance = 0.4f;
-    public LayerMask groundMask;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundDistance = 0.4f;
+    [SerializeField] private LayerMask groundMask;
 
     [Header("Animation")]
-    public Animator animator;
+    [SerializeField] private Animator animator;
 
+    // --- Caching Components & Variables ---
     private CharacterController controller;
+    private float turnSmoothVelocity;
+    private float currentX = 0f;
+    private float currentY = 0f;
     private Vector3 velocity;
     private bool isGrounded;
-    private bool hasGroundCheck; // เก็บค่าบูลีนไว้ใช้ครั้งเดียวเพื่อความเร็ว
+    private bool hasGroundCheck;
+    
+    // --- Zero Allocation Caches ---
+    // สร้างตัวแปร Vector ไว้ล่วงหน้า ไม่ใช้คำสั่ง new ใน Update
+    private Vector3 inputDirection;
+    private Vector3 moveDirection;
+    
+    // แคชค่า Jump Velocity เพื่อหลีกเลี่ยง Mathf.Sqrt() ในขณะเล่น
+    private float calculatedJumpVelocity;
+    
+    // แคช Animator Parameters เป็น Hash (int) เพื่อหลีกเลี่ยงการจอง String (Zero String Allocation)
+    private readonly int speedHash = Animator.StringToHash("Speed");
+    private readonly int isGroundedHash = Animator.StringToHash("IsGrounded");
+    private readonly int jumpHash = Animator.StringToHash("Jump");
 
-    void Start()
+    private void Awake()
     {
+        // 1. แคช Components ไว้ใน Awake() ให้จบ
         controller = GetComponent<CharacterController>();
         hasGroundCheck = groundCheck != null;
         
@@ -47,32 +61,53 @@ public class Playermovement : MonoBehaviour
             animator = GetComponentInChildren<Animator>();
         }
 
-        // ❌ เอา Camera.main ออกไปเลย เพื่อลด Overhead ตอนเริ่มเกม (GameObject.FindObjectWithTag)
-        // ✅ บังคับให้ตั้งค่าอ้างอิงผ่าน Inspector โดยตรง 
+        // 2. ป้องกัน Costly Find Operations บังคับใส่ใน Inspector
         if (cameraTransform == null)
         {
             Debug.LogError("Playermovement: กรุณาลากใส่ Camera ในช่อง Camera Transform ผ่าน Inspector!");
-            enabled = false; // ปิดการทำงานสคริปต์นี้ถ้าไม่ได้ลากใส่
+            enabled = false;
             return;
         }
 
+        // 3. แคชการคำนวณคณิตศาสตร์ที่ตายตัวไว้ล่วงหน้า
+        CalculateJumpVelocity();
+    }
+
+    private void Start()
+    {
         Vector3 euler = cameraTransform.eulerAngles;
         currentX = euler.y;
         currentY = euler.x;
 
-        // ล็อกเมาส์ทันทีเมื่อเริ่มเกม
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    void LateUpdate()
+    // หากมีการปรับค่าความสูงกระโดดใน Inspector ขณะเล่น ให้คำนวณใหม่
+    private void OnValidate()
+    {
+        CalculateJumpVelocity();
+    }
+
+    private void CalculateJumpVelocity()
+    {
+        calculatedJumpVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+    }
+
+    private void LateUpdate()
     {
         HandleCamera();
     }
 
-    void Update()
+    private void Update()
     {
-        // กดปุ่ม ESC เพื่อสลับการล็อก/ปลดล็อกเมาส์
+        // Clean Architecture: แยกฟังก์ชันการทำงานออกจาก Update
+        HandleMouseLock();
+        HandleMovement();
+    }
+
+    private void HandleMouseLock()
+    {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (Cursor.lockState == CursorLockMode.Locked)
@@ -86,15 +121,10 @@ public class Playermovement : MonoBehaviour
                 Cursor.visible = false;
             }
         }
-
-        HandleMovement();
     }
 
-    void HandleCamera()
+    private void HandleCamera()
     {
-        // ตัดบรรทัด if (cameraTransform == null) return; ทิ้ง เพราะเช็คใน Start และปิด Script ไปแล้ว
-
-        // หมุนกล้องเมื่อกดคลิกขวาค้าง หรือในขณะที่เมาส์ถูกล็อกอยู่ (CursorLockMode.Locked)
         if (Input.GetMouseButton(1) || Cursor.lockState == CursorLockMode.Locked)
         {
             currentX += Input.GetAxis("Mouse X") * mouseSensitivityX;
@@ -109,16 +139,18 @@ public class Playermovement : MonoBehaviour
             distance = Mathf.Clamp(distance, 2f, 15f);
         }
 
-        // ถ้ามีการกำหนดจุด cameraTarget พิเศษ ให้ใช้จุดนั้น ถ้าไม่มีให้ใช้ตำแหน่งตัวละครบวกด้วย Offset
         Vector3 targetPosition = cameraTarget != null ? cameraTarget.position : (transform.position + targetOffset);
+        
+        // ใช้ Quaternion.Euler สร้าง Rotation ชั่วคราว (Struct ไม่มีผลต่อ GC)
         Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
         
         cameraTransform.position = targetPosition - (rotation * Vector3.forward * distance);
         cameraTransform.rotation = rotation;
     }
 
-    void HandleMovement()
+    private void HandleMovement()
     {
+        // 1. เช็คพื้น
         if (hasGroundCheck)
         {
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
@@ -133,55 +165,60 @@ public class Playermovement : MonoBehaviour
             velocity.y = -2f;
         }
 
+        // 2. คำนวณทิศทางการเดิน (Zero Allocation Vector3)
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+        
+        inputDirection.x = horizontal;
+        inputDirection.y = 0f;
+        inputDirection.z = vertical;
+        inputDirection.Normalize();
 
-        // ✅ ประหยัด Performance: เช็คความยาวด้วย sqrMagnitude แทน magnitude เพราะไม่ต้องถอด Root (Math.Sqrt)
-        if (direction.sqrMagnitude >= 0.01f)
+        if (inputDirection.sqrMagnitude >= 0.01f)
         {
-            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cameraTransform.eulerAngles.y;
-
+            float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + cameraTransform.eulerAngles.y;
             float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
             transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            // นำค่าไปใส่ใน Struct แทนการสร้าง new Vector3 ใหม่
+            moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             
             float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : moveSpeed;
-            controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
+            controller.Move(moveDirection.normalized * currentSpeed * Time.deltaTime);
 
-            // กำหนดความเร็วแอนิเมชัน (เดิน = 0.5, วิ่ง = 1)
             if (animator != null)
             {
                 float speedParam = Input.GetKey(KeyCode.LeftShift) ? 1f : 0.5f;
-                animator.SetFloat("Speed", speedParam, 0.1f, Time.deltaTime);
+                // ใช้ Hash แทน String ประหยัด Memory ฝั่งแอนิเมชันได้ 100%
+                animator.SetFloat(speedHash, speedParam, 0.1f, Time.deltaTime);
             }
         }
         else
         {
             if (animator != null)
             {
-                animator.SetFloat("Speed", 0f, 0.1f, Time.deltaTime);
+                animator.SetFloat(speedHash, 0f, 0.1f, Time.deltaTime);
             }
         }
 
         if (animator != null)
         {
-            animator.SetBool("IsGrounded", isGrounded);
-            // animator.SetFloat("VerticalSpeed", velocity.y); // เอาคอมเมนต์ออกถ้าต้องการใช้ค่านี้กับแอนิเมชันตอนตก
+            animator.SetBool(isGroundedHash, isGrounded);
         }
 
+        // 3. ระบบกระโดด
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            // ทำการหาค่าแรงกระโดด สามารถปรับไปทำใน Inspector ได้ถ้าต้องการให้เร็วขึ้นไปอีก
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            // ดึงค่าที่คำนวณไว้ล่วงหน้ามาใช้ทันที ไม่ต้องรันสูตร Mathf.Sqrt ซ้ำ
+            velocity.y = calculatedJumpVelocity;
             
             if (animator != null)
             {
-                animator.SetTrigger("Jump");
+                animator.SetTrigger(jumpHash);
             }
         }
 
+        // 4. แร็งโน้มถ่วง
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }

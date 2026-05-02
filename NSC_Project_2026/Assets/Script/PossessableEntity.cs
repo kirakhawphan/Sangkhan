@@ -4,10 +4,9 @@ using UnityEngine;
 public class PossessableEntity : MonoBehaviour
 {
     [Header("Entity Info")]
-    [Tooltip("ชื่อของร่างนี้ (เอาไว้แสดงผล UI หรือใช้แยกแยะ)")]
-    public string entityName = "Unknown Entity";
+    [SerializeField, Tooltip("ชื่อของร่างนี้ (เอาไว้แสดงผล UI หรือใช้แยกแยะ)")]
+    private string entityName = "Unknown Entity";
     
-    // ตัวแปรต่างๆ ที่คุณอาจจะต้องเพิ่มในอนาคต เช่น:
-    // public Transform cameraFollowPoint;
-    // public MonoBehaviour characterControllerScript;
+    // Property สำหรับให้ภายนอกอ่านค่าได้อย่างเดียว (Encapsulation)
+    public string EntityName => entityName;
 }

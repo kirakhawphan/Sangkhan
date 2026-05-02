@@ -4,42 +4,93 @@ using UnityEngine;
 public class PossessionManager : MonoBehaviour
 {
     [Header("Detection Settings")]
-    [Tooltip("ระยะการตรวจจับเป้าหมายที่อยู่หน้ากล้อง (ความไกล)")]
-    public float maxDetectionDistance = 15f;
+    [SerializeField, Tooltip("ระยะการตรวจจับเป้าหมายที่อยู่หน้ากล้อง (ความไกล)")]
+    private float maxDetectionDistance = 15f;
     
-    [Tooltip("ความกว้างของเป้าเล็ง (ยิ่งมากยิ่งเล็งโดนง่ายโดยไม่ต้องหันหน้าตรงเป๊ะ)")]
-    public float aimRadius = 1.5f;
+    [SerializeField, Tooltip("ความกว้างของเป้าเล็ง (ยิ่งมากยิ่งเล็งโดนง่ายโดยไม่ต้องหันหน้าตรงเป๊ะ)")]
+    private float aimRadius = 1.5f;
 
-    [Tooltip("Layer ของเป้าหมาย (ใช้สำหรับจำกัดการค้นหาให้มีประสิทธิภาพขึ้น ควรตั้ง Layer ให้กับตัวที่สิงได้)")]
-    public LayerMask possessableLayer; 
+    [SerializeField, Tooltip("Layer ของเป้าหมาย (สำคัญ: ต้องตั้งให้ตรงกับ Layer ของ PossessableEntity)")]
+    private LayerMask possessableLayer; 
 
-    [Tooltip("กล้องของผู้เล่น (ถ้าไม่ใส่สคริปต์จะหา Camera.main ให้อัตโนมัติ)")]
-    public Camera playerCamera;
+    [SerializeField, Tooltip("กล้องของผู้เล่น (ลาก Main Camera มาใส่ช่องนี้)")]
+    private Camera playerCamera;
 
     [Header("Target Info (Read Only)")]
-    [Tooltip("เป้าหมายที่อยู่หน้ากล้องและใกล้ที่สุดในขณะนี้")]
-    public PossessableEntity currentTarget;
+    [SerializeField, Tooltip("เป้าหมายที่อยู่หน้ากล้องและใกล้ที่สุดในขณะนี้")]
+    private PossessableEntity currentTarget;
 
-    void Start()
+    // --- Optimization Caching ---
+    // ใช้ NonAlloc เพื่อลด Garbage Collection (Zero Allocation) ในแต่ละเฟรม
+    // จองหน่วยความจำไว้ล่วงหน้า (สามารถปรับขนาด Array ได้ตามความเหมาะสมของเกม)
+    private readonly RaycastHit[] hitResults = new RaycastHit[10]; 
+    
+    // เก็บค่ากึ่งกลางหน้าจอไว้เพื่อไม่ให้เกิดการสร้าง Vector3 ใหม่ทุกเฟรม
+    private readonly Vector3 screenCenter = new Vector3(0.5f, 0.5f, 0f);
+
+    private void Awake()
     {
-        // ถ้าไม่ได้ลากกล้องมาใส่ใน Inspector ให้หาจาก Main Camera อัตโนมัติ
+        // ย้ายการเช็คค่าว่างมาไว้ใน Awake เพื่อแจังเตือนตั้งแต่เริ่มเกม แทนที่จะหาใน Update หรือใช้ Find
         if (playerCamera == null)
         {
-            playerCamera = Camera.main;
+            Debug.LogError("[PossessionManager] Player Camera is not assigned! Please drag the camera into the inspector.", this);
         }
     }
 
-    void Update()
+    private void Update()
     {
-        // 1. ตรวจจับเป้าหมายแบบหน้ากล้องเรียลไทม์
-        DetectPossessableEntities();
+        // Clean Architecture: แยกหน้าที่ให้ชัดเจน (Single Responsibility)
+        if (playerCamera != null)
+        {
+            UpdateTargetDetection();
+        }
 
-        // 2. รับ Input จากผู้เล่น (ตัวอย่างใช้ปุ่ม E สำหรับสิงร่าง)
+        HandlePossessionInput();
+    }
+
+    // ฟังก์ชันสำหรับตรวจหา PossessableEntity ตรงหน้ากล้อง
+    private void UpdateTargetDetection()
+    {
+        Ray ray = playerCamera.ViewportPointToRay(screenCenter);
+        
+        // ใช้ SphereCastNonAlloc แทน SphereCastAll เพื่อไม่ให้มีการจอง Memory (GC Allocation) ใหม่ในทุกเฟรม
+        int hitCount = Physics.SphereCastNonAlloc(ray, aimRadius, hitResults, maxDetectionDistance, possessableLayer);
+        
+        PossessableEntity closestEntity = null;
+        float closestDistance = float.MaxValue;
+
+        // วนลูปเฉพาะจำนวนที่โดนจริง (hitCount)
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hitCollider = hitResults[i].collider;
+            
+            // ใช้ TryGetComponent แทน GetComponent ปกติ เพื่อลด Overhead ในการเช็ค Null และทำงานเร็วกว่า
+            if (hitCollider.TryGetComponent(out PossessableEntity entity))
+            {
+                // ตรวจสอบว่าไม่ใช่ตัวเอง (กันการสิงร่างตัวเอง)
+                if (entity.gameObject != this.gameObject)
+                {
+                    float distance = hitResults[i].distance;
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        closestEntity = entity;
+                    }
+                }
+            }
+        }
+
+        currentTarget = closestEntity;
+    }
+
+    // ฟังก์ชันรับ Input เพื่อสิงร่าง
+    private void HandlePossessionInput()
+    {
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (currentTarget != null)
             {
-                Possess(currentTarget);
+                ExecutePossession(currentTarget);
             }
             else
             {
@@ -48,71 +99,23 @@ public class PossessionManager : MonoBehaviour
         }
     }
 
-    // ฟังก์ชันสำหรับตรวจหา PossessableEntity ตรงหน้ากล้อง
-    void DetectPossessableEntities()
+    // ฟังก์ชันดำเนินการสิงร่าง
+    private void ExecutePossession(PossessableEntity targetEntity)
     {
-        if (playerCamera == null) return;
-
-        // สร้างเส้นเล็ง (Ray) ยิงออกจากตรงกลางหน้าจอของกล้อง
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        
-        // ใช้ SphereCastAll ยิงเหมือน "แคปซูล" พุ่งไปข้างหน้ากล้อง
-        RaycastHit[] hits;
-        
-        if (possessableLayer != 0)
-        {
-            hits = Physics.SphereCastAll(ray, aimRadius, maxDetectionDistance, possessableLayer);
-        }
-        else
-        {
-            hits = Physics.SphereCastAll(ray, aimRadius, maxDetectionDistance);
-        }
-        
-        PossessableEntity closestEntity = null;
-        float closestDistance = Mathf.Infinity;
-
-        // วนลูปหาตัวที่อยู่ใกล้กล้องมากที่สุดในบรรดาตัวที่โดนลำแสง
-        foreach (RaycastHit hit in hits)
-        {
-            PossessableEntity entity = hit.collider.GetComponent<PossessableEntity>();
-            
-            // ตรวจสอบว่ามีสคริปต์ PossessableEntity และไม่ใช่ตัวเอง (กันการสิงร่างตัวเอง)
-            if (entity != null && entity.gameObject != this.gameObject)
-            {
-                // เช็คระยะว่าใครใกล้กว่า
-                if (hit.distance < closestDistance)
-                {
-                    closestDistance = hit.distance;
-                    closestEntity = entity;
-                }
-            }
-        }
-
-        // อัปเดตเป้าหมายปัจจุบัน
-        currentTarget = closestEntity;
-    }
-
-    // ฟังก์ชันสำหรับสิงร่าง
-    void Possess(PossessableEntity targetEntity)
-    {
-        Debug.Log("กำลังสิงร่าง: " + targetEntity.entityName);
+        // เรียก Property EntityName ที่ถูก Encapsulate ไว้
+        Debug.Log($"กำลังสิงร่าง: {targetEntity.EntityName}");
         
         // --- สิ่งที่ต้องทำต่อไปในระบบสลับร่าง ---
-        // 1. ปิดระบบควบคุมของร่างเดิม (เช่น GetComponent<PlayerMovement>().enabled = false;)
-        // 2. เปิดระบบควบคุมให้ร่างใหม่ (targetEntity.GetComponent<PlayerMovement>().enabled = true;)
-        // 3. ย้ายมุมกล้อง Camera ไปยังร่างใหม่
-        // 4. (ทางเลือก) ย้ายสคริปต์ PossessionManager นี้ไปไว้ที่ร่างใหม่ เพื่อให้ร่างใหม่ไปสิงคนอื่นต่อได้
     }
 
-    // แสดงลำแสงการตรวจจับสีเหลืองในหน้า Scene (ช่วยให้ตั้งค่า aimRadius ได้ง่ายขึ้น)
+    // แสดงลำแสงการตรวจจับสีเหลืองในหน้า Scene
     private void OnDrawGizmosSelected()
     {
         if (playerCamera != null)
         {
             Gizmos.color = Color.yellow;
-            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)); // อนุโลมใน Gizmos ได้เพราะไม่ได้รันตอนเล่นจริง
             
-            // วาดเส้นและวงกลมเพื่อจำลองลำแสง
             Gizmos.DrawRay(ray.origin, ray.direction * maxDetectionDistance);
             Gizmos.DrawWireSphere(ray.origin + (ray.direction * maxDetectionDistance), aimRadius);
         }
