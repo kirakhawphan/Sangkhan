@@ -7,6 +7,10 @@ public class Playermovement : MonoBehaviour
     [Tooltip("ติ๊กถูกเฉพาะตัวที่ผู้เล่นควบคุมตั้งแต่เริ่มเกม")]
     public bool isPossessed = false;
 
+    [HideInInspector]
+    [Tooltip("ล็อกกล้องไม่ให้ HandleCamera ทำงาน (ใช้ตอน PossessionManager กำลังเคลื่อนกล้องแบบ Smooth)")]
+    public bool cameraLocked = false;
+
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float runSpeed = 10f;
@@ -109,6 +113,18 @@ public class Playermovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// คำนวณตำแหน่งและทิศทางกล้องปลายทาง (ไม่ได้ย้ายกล้องจริง)
+    /// ใช้สำหรับ PossessionManager ในการ Lerp กล้องไปยังจุดหมาย
+    /// </summary>
+    public void GetCameraDestination(out Vector3 destPosition, out Quaternion destRotation)
+    {
+        Vector3 targetPosition = cameraTarget != null ? cameraTarget.position : (transform.position + targetOffset);
+        Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
+        destPosition = targetPosition - (rotation * Vector3.forward * distance);
+        destRotation = rotation;
+    }
+
     private void LateUpdate()
     {
         if (isPossessed)
@@ -146,7 +162,7 @@ public class Playermovement : MonoBehaviour
 
     private void HandleCamera()
     {
-        if (cameraTransform == null) return; // ป้องกัน Error หากยังไม่ได้รับกล้อง
+        if (cameraTransform == null || cameraLocked) return; // ป้องกัน Error หรือล็อกตอน Smooth Transition
 
         if (Input.GetMouseButton(1) || Cursor.lockState == CursorLockMode.Locked)
         {

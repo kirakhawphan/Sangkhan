@@ -13,6 +13,13 @@ public class PossessionManager : MonoBehaviour
     [SerializeField, Tooltip("สคริปต์ควบคุม UI ที่สร้างไว้ (ลากจาก Hierarchy มาใส่)")]
     private PossessionUIController uiController;
 
+    [Header("Smooth Camera Transition")]
+    [SerializeField, Tooltip("เปิด/ปิด ระบบเคลื่อนกล้องแบบ Smooth ตอนสิงร่าง (ปิดแล้วกล้องจะวาร์ปไปทันที)")]
+    private bool useSmoothCameraTransition = true;
+
+    [SerializeField, Tooltip("ระยะเวลาที่กล้องใช้เคลื่อนที่ไปยังร่างใหม่ (วินาที)")]
+    private float cameraTransitionDuration = 0.6f;
+
     [Header("Detection Settings")]
     [SerializeField, Tooltip("ระยะการตรวจจับเป้าหมายที่อยู่หน้ากล้อง (ความไกล)")]
     private float maxDetectionDistance = 15f;
@@ -30,6 +37,13 @@ public class PossessionManager : MonoBehaviour
     // --- Optimization Caching ---
     private readonly RaycastHit[] hitResults = new RaycastHit[10]; 
     private readonly Vector3 screenCenter = new Vector3(0.5f, 0.5f, 0f);
+
+    // --- Smooth Camera Transition State ---
+    private bool isTransitioning = false;
+    private float transitionTimer = 0f;
+    private Vector3 transitionStartPos;
+    private Quaternion transitionStartRot;
+    private Transform cameraTransformCache;
 
     private void Awake()
     {
@@ -57,6 +71,14 @@ public class PossessionManager : MonoBehaviour
         }
 
         HandlePossessionInput();
+    }
+
+    private void LateUpdate()
+    {
+        if (isTransitioning)
+        {
+            HandleCameraTransition();
+        }
     }
 
     private void UpdateTargetDetection()
@@ -142,6 +164,7 @@ public class PossessionManager : MonoBehaviour
             if (currentBody != null)
             {
                 currentBody.isPossessed = false;
+                currentBody.cameraLocked = false; // ปลดล็อกกล้องตัวเก่า
                 // สังเกตว่าเราไม่ได้ตั้ง enabled = false แล้ว เพื่อให้ตัวละครเก่ายังคงตกลงพื้นได้!
                 
                 // หากมี Animator สั่งให้มันหยุดเดิน
@@ -159,7 +182,13 @@ public class PossessionManager : MonoBehaviour
             newBody.isPossessed = true;
             newBody.enabled = true;
 
-            // 5. อัปเดตตัวแปร currentBody เป็นตัวใหม่
+            // 5. เริ่มระบบ Smooth Camera Transition (ถ้าเปิดใช้งาน)
+            if (useSmoothCameraTransition)
+            {
+                StartCameraTransition(newBody);
+            }
+
+            // 6. อัปเดตตัวแปร currentBody เป็นตัวใหม่
             currentBody = newBody;
 
             // ซ่อน UI หลังสิงร่างสำเร็จ
@@ -169,6 +198,76 @@ public class PossessionManager : MonoBehaviour
         else
         {
             Debug.LogError($"[PossessionManager] เป้าหมาย {targetEntity.name} ไม่มีสคริปต์ Playermovement!", targetEntity);
+        }
+    }
+
+    // ==================== Smooth Camera Transition ====================
+
+    /// <summary>
+    /// เริ่มระบบเคลื่อนกล้องแบบ Smooth ไปยังร่างใหม่
+    /// จะล็อกกล้องของ Playermovement ไว้ชั่วคราวแล้วให้ PossessionManager ควบคุมแทน
+    /// </summary>
+    private void StartCameraTransition(Playermovement newBody)
+    {
+        if (cameraTransformCache == null)
+        {
+            cameraTransformCache = playerCamera.transform;
+        }
+
+        // จำตำแหน่งปัจจุบันของกล้องก่อนย้าย
+        transitionStartPos = cameraTransformCache.position;
+        transitionStartRot = cameraTransformCache.rotation;
+
+        // ล็อกกล้องของตัวใหม่ไว้ไม่ให้มัน snap ใน HandleCamera()
+        newBody.cameraLocked = true;
+
+        // รีเซ็ตตัวจับเวลา
+        transitionTimer = 0f;
+        isTransitioning = true;
+    }
+
+    /// <summary>
+    /// จัดการ Lerp กล้องทุกเฟรม (เรียกใน LateUpdate เพื่อให้ทำงานหลัง HandleCamera)
+    /// </summary>
+    private void HandleCameraTransition()
+    {
+        if (currentBody == null || cameraTransformCache == null)
+        {
+            FinishCameraTransition();
+            return;
+        }
+
+        transitionTimer += Time.deltaTime;
+        float t = Mathf.Clamp01(transitionTimer / cameraTransitionDuration);
+
+        // ใช้ SmoothStep เพื่อให้การเคลื่อนที่รู้สึกเป็นธรรมชาติ (ช้า -> เร็ว -> ช้า)
+        float smoothT = t * t * (3f - 2f * t);
+
+        // คำนวณจุดหมายปลายทาง (อัปเดตทุกเฟรมเพราะตัวละครอาจเคลื่อนที่ระหว่าง transition)
+        currentBody.GetCameraDestination(out Vector3 destPos, out Quaternion destRot);
+
+        // Lerp ตำแหน่งและการหมุน
+        cameraTransformCache.position = Vector3.Lerp(transitionStartPos, destPos, smoothT);
+        cameraTransformCache.rotation = Quaternion.Slerp(transitionStartRot, destRot, smoothT);
+
+        // จบ transition เมื่อถึงเป้าหมาย
+        if (t >= 1f)
+        {
+            FinishCameraTransition();
+        }
+    }
+
+    /// <summary>
+    /// จบระบบ Smooth Transition และคืนสิทธิ์กล้องให้ Playermovement
+    /// </summary>
+    private void FinishCameraTransition()
+    {
+        isTransitioning = false;
+
+        // ปลดล็อกกล้องให้ Playermovement กลับมาควบคุมเอง
+        if (currentBody != null)
+        {
+            currentBody.cameraLocked = false;
         }
     }
 
