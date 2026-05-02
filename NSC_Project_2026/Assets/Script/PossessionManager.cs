@@ -1,8 +1,18 @@
 using UnityEngine;
 
-// นำสคริปต์นี้ไปแปะไว้ที่ตัวละครที่ผู้เล่นกำลังควบคุมอยู่
+// นำสคริปต์นี้ไปแปะไว้ที่ GameManager หรือ GameObject เปล่าๆ ในฉาก (ไม่ต้องแปะไว้ที่ตัวละครแล้ว)
 public class PossessionManager : MonoBehaviour
 {
+    [Header("System References")]
+    [SerializeField, Tooltip("ตัวละครเริ่มต้นที่ผู้เล่นควบคุม (ลากตัวละครที่มี Playermovement มาใส่)")]
+    private Playermovement currentBody;
+
+    [SerializeField, Tooltip("กล้องของผู้เล่น (ลาก Main Camera มาใส่ช่องนี้)")]
+    private Camera playerCamera;
+
+    [SerializeField, Tooltip("สคริปต์ควบคุม UI ที่สร้างไว้ (ลากจาก Hierarchy มาใส่)")]
+    private PossessionUIController uiController;
+
     [Header("Detection Settings")]
     [SerializeField, Tooltip("ระยะการตรวจจับเป้าหมายที่อยู่หน้ากล้อง (ความไกล)")]
     private float maxDetectionDistance = 15f;
@@ -13,37 +23,33 @@ public class PossessionManager : MonoBehaviour
     [SerializeField, Tooltip("Layer ของเป้าหมาย (สำคัญ: ต้องตั้งให้ตรงกับ Layer ของ PossessableEntity)")]
     private LayerMask possessableLayer; 
 
-    [SerializeField, Tooltip("กล้องของผู้เล่น (ลาก Main Camera มาใส่ช่องนี้)")]
-    private Camera playerCamera;
-
     [Header("Target Info (Read Only)")]
     [SerializeField, Tooltip("เป้าหมายที่อยู่หน้ากล้องและใกล้ที่สุดในขณะนี้")]
     private PossessableEntity currentTarget;
 
-    [Header("UI Control")]
-    [SerializeField, Tooltip("สคริปต์ควบคุม UI ที่สร้างไว้ (ลากจาก Hierarchy มาใส่)")]
-    private PossessionUIController uiController;
-
     // --- Optimization Caching ---
-    // ใช้ NonAlloc เพื่อลด Garbage Collection (Zero Allocation) ในแต่ละเฟรม
-    // จองหน่วยความจำไว้ล่วงหน้า (สามารถปรับขนาด Array ได้ตามความเหมาะสมของเกม)
     private readonly RaycastHit[] hitResults = new RaycastHit[10]; 
-    
-    // เก็บค่ากึ่งกลางหน้าจอไว้เพื่อไม่ให้เกิดการสร้าง Vector3 ใหม่ทุกเฟรม
     private readonly Vector3 screenCenter = new Vector3(0.5f, 0.5f, 0f);
 
     private void Awake()
     {
-        // ย้ายการเช็คค่าว่างมาไว้ใน Awake เพื่อแจังเตือนตั้งแต่เริ่มเกม แทนที่จะหาใน Update หรือใช้ Find
         if (playerCamera == null)
         {
-            Debug.LogError("[PossessionManager] Player Camera is not assigned! Please drag the camera into the inspector.", this);
+            playerCamera = Camera.main;
+            if (playerCamera == null)
+                Debug.LogError("[PossessionManager] Player Camera is not assigned! Please drag the camera into the inspector.", this);
+        }
+
+        if (currentBody != null && playerCamera != null)
+        {
+            // เซ็ตกล้องให้ตัวละครเริ่มต้น
+            currentBody.SetupCamera(playerCamera.transform);
+            currentBody.enabled = true; // มั่นใจว่าเปิดใช้งาน
         }
     }
 
     private void Update()
     {
-        // Clean Architecture: แยกหน้าที่ให้ชัดเจน (Single Responsibility)
         if (playerCamera != null)
         {
             UpdateTargetDetection();
@@ -52,57 +58,56 @@ public class PossessionManager : MonoBehaviour
         HandlePossessionInput();
     }
 
-    // ฟังก์ชันสำหรับตรวจหา PossessableEntity ตรงหน้ากล้อง
     private void UpdateTargetDetection()
     {
         Ray ray = playerCamera.ViewportPointToRay(screenCenter);
         
-        // ใช้ SphereCastNonAlloc แทน SphereCastAll เพื่อไม่ให้มีการจอง Memory (GC Allocation) ใหม่ในทุกเฟรม
+        // วาดเส้นสีแดงในหน้า Scene View ตลอดเวลาเพื่อให้เห็นทิศทางของ Ray
+        Debug.DrawRay(ray.origin, ray.direction * maxDetectionDistance, Color.red);
+        
         int hitCount = Physics.SphereCastNonAlloc(ray, aimRadius, hitResults, maxDetectionDistance, possessableLayer);
         
         PossessableEntity closestEntity = null;
         float closestDistance = float.MaxValue;
 
-        // วนลูปเฉพาะจำนวนที่โดนจริง (hitCount)
         for (int i = 0; i < hitCount; i++)
         {
             Collider hitCollider = hitResults[i].collider;
             
-            // ใช้ TryGetComponent แทน GetComponent ปกติ เพื่อลด Overhead ในการเช็ค Null และทำงานเร็วกว่า
-            if (hitCollider.TryGetComponent(out PossessableEntity entity))
+            // ใช้ GetComponentInParent เพื่อดักจับกรณีที่ Collider อยู่ที่ลูก แต่สคริปต์อยู่แม่
+            PossessableEntity entity = hitCollider.GetComponentInParent<PossessableEntity>();
+            
+            if (entity != null)
             {
-                // ตรวจสอบว่าไม่ใช่ตัวเอง (กันการสิงร่างตัวเอง)
-                if (entity.gameObject != this.gameObject)
+                // ตรวจสอบว่าไม่ใช่ตัวเอง
+                if (currentBody != null && entity.gameObject == currentBody.gameObject)
+                    continue;
+
+                float distance = hitResults[i].distance;
+                if (distance < closestDistance)
                 {
-                    float distance = hitResults[i].distance;
-                    if (distance < closestDistance)
-                    {
-                        closestDistance = distance;
-                        closestEntity = entity;
-                    }
+                    closestDistance = distance;
+                    closestEntity = entity;
                 }
             }
         }
 
         currentTarget = closestEntity;
 
-        // --- ควบคุม UI ---
+        // ควบคุม UI
         if (uiController != null)
         {
             if (currentTarget != null)
             {
-                // สั่งเปิด UI และส่งตำแหน่ง Transform ของเป้าหมายไปให้
                 uiController.ShowUI(currentTarget.transform);
             }
             else
             {
-                // ถ้าไม่มีเป้าหมาย สั่งปิด UI
                 uiController.HideUI();
             }
         }
     }
 
-    // ฟังก์ชันรับ Input เพื่อสิงร่าง
     private void HandlePossessionInput()
     {
         if (Input.GetKeyDown(KeyCode.E))
@@ -118,22 +123,52 @@ public class PossessionManager : MonoBehaviour
         }
     }
 
-    // ฟังก์ชันดำเนินการสิงร่าง
     private void ExecutePossession(PossessableEntity targetEntity)
     {
-        // เรียก Property EntityName ที่ถูก Encapsulate ไว้
         Debug.Log($"กำลังสิงร่าง: {targetEntity.EntityName}");
         
-        // --- สิ่งที่ต้องทำต่อไปในระบบสลับร่าง ---
+        // 1. ดึงสคริปต์ Playermovement ของร่างเป้าหมาย
+        if (targetEntity.TryGetComponent(out Playermovement newBody))
+        {
+            // 2. ปิดสคริปต์ตัวเดิม
+            if (currentBody != null)
+            {
+                currentBody.enabled = false;
+                
+                // หากมี Animator สั่งให้มันหยุดเดิน
+                Animator oldAnim = currentBody.GetComponentInChildren<Animator>();
+                if (oldAnim != null)
+                {
+                    oldAnim.SetFloat("Speed", 0f);
+                }
+            }
+
+            // 3. เซ็ตค่าให้ตัวใหม่ (ส่งมอบกล้องไปให้)
+            newBody.SetupCamera(playerCamera.transform);
+
+            // 4. เปิดใช้งานตัวใหม่
+            newBody.enabled = true;
+
+            // 5. อัปเดตตัวแปร currentBody เป็นตัวใหม่
+            currentBody = newBody;
+
+            // ซ่อน UI หลังสิงร่างสำเร็จ
+            currentTarget = null;
+            if (uiController != null) uiController.HideUI();
+        }
+        else
+        {
+            Debug.LogError($"[PossessionManager] เป้าหมาย {targetEntity.name} ไม่มีสคริปต์ Playermovement!", targetEntity);
+        }
     }
 
-    // แสดงลำแสงการตรวจจับสีเหลืองในหน้า Scene
-    private void OnDrawGizmosSelected()
+    // เปลี่ยนมาใช้ OnDrawGizmos (ไม่ต้องกดคลิกวัตถุก็เห็นเส้นเหลืองได้)
+    private void OnDrawGizmos()
     {
         if (playerCamera != null)
         {
             Gizmos.color = Color.yellow;
-            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)); // อนุโลมใน Gizmos ได้เพราะไม่ได้รันตอนเล่นจริง
+            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             
             Gizmos.DrawRay(ray.origin, ray.direction * maxDetectionDistance);
             Gizmos.DrawWireSphere(ray.origin + (ray.direction * maxDetectionDistance), aimRadius);

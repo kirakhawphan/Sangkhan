@@ -61,13 +61,7 @@ public class Playermovement : MonoBehaviour
             animator = GetComponentInChildren<Animator>();
         }
 
-        // 2. ป้องกัน Costly Find Operations บังคับใส่ใน Inspector
-        if (cameraTransform == null)
-        {
-            Debug.LogError("Playermovement: กรุณาลากใส่ Camera ในช่อง Camera Transform ผ่าน Inspector!");
-            enabled = false;
-            return;
-        }
+        // (ย้ายการเช็ค Camera ออกไปเพื่อให้สามารถรับค่า Camera กลางเกมตอนสลับร่างได้)
 
         // 3. แคชการคำนวณคณิตศาสตร์ที่ตายตัวไว้ล่วงหน้า
         CalculateJumpVelocity();
@@ -75,9 +69,12 @@ public class Playermovement : MonoBehaviour
 
     private void Start()
     {
-        Vector3 euler = cameraTransform.eulerAngles;
-        currentX = euler.y;
-        currentY = euler.x;
+        if (cameraTransform != null)
+        {
+            Vector3 euler = cameraTransform.eulerAngles;
+            currentX = euler.y;
+            currentY = euler.x;
+        }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -92,6 +89,20 @@ public class Playermovement : MonoBehaviour
     private void CalculateJumpVelocity()
     {
         calculatedJumpVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+    }
+
+    // ฟังก์ชันสำหรับรับสืบทอดกล้องตอนสลับร่าง
+    public void SetupCamera(Transform newCameraTransform)
+    {
+        cameraTransform = newCameraTransform;
+        
+        // รีเซ็ตค่าการหมุนให้เข้ากับมุมกล้องปัจจุบัน
+        if (cameraTransform != null)
+        {
+            Vector3 euler = cameraTransform.eulerAngles;
+            currentX = euler.y;
+            currentY = euler.x;
+        }
     }
 
     private void LateUpdate()
@@ -125,6 +136,8 @@ public class Playermovement : MonoBehaviour
 
     private void HandleCamera()
     {
+        if (cameraTransform == null) return; // ป้องกัน Error หากยังไม่ได้รับกล้อง
+
         if (Input.GetMouseButton(1) || Cursor.lockState == CursorLockMode.Locked)
         {
             currentX += Input.GetAxis("Mouse X") * mouseSensitivityX;
@@ -176,7 +189,7 @@ public class Playermovement : MonoBehaviour
 
         if (inputDirection.sqrMagnitude >= 0.01f)
         {
-            float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + cameraTransform.eulerAngles.y;
+            float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + (cameraTransform != null ? cameraTransform.eulerAngles.y : transform.eulerAngles.y);
             float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
             transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
