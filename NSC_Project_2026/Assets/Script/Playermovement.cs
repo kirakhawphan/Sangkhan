@@ -3,6 +3,10 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class Playermovement : MonoBehaviour
 {
+    [Header("Possession State")]
+    [Tooltip("ติ๊กถูกเฉพาะตัวที่ผู้เล่นควบคุมตั้งแต่เริ่มเกม")]
+    public bool isPossessed = false;
+
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float runSpeed = 10f;
@@ -107,13 +111,19 @@ public class Playermovement : MonoBehaviour
 
     private void LateUpdate()
     {
-        HandleCamera();
+        if (isPossessed)
+        {
+            HandleCamera();
+        }
     }
 
     private void Update()
     {
-        // Clean Architecture: แยกฟังก์ชันการทำงานออกจาก Update
-        HandleMouseLock();
+        if (isPossessed)
+        {
+            HandleMouseLock();
+        }
+        
         HandleMovement();
     }
 
@@ -178,9 +188,15 @@ public class Playermovement : MonoBehaviour
             velocity.y = -2f;
         }
 
-        // 2. คำนวณทิศทางการเดิน (Zero Allocation Vector3)
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        // 2. คำนวณทิศทางการเดิน (รับค่าเฉพาะตอนที่ถูกสิงร่าง)
+        float horizontal = 0f;
+        float vertical = 0f;
+
+        if (isPossessed)
+        {
+            horizontal = Input.GetAxisRaw("Horizontal");
+            vertical = Input.GetAxisRaw("Vertical");
+        }
         
         inputDirection.x = horizontal;
         inputDirection.y = 0f;
@@ -219,8 +235,8 @@ public class Playermovement : MonoBehaviour
             animator.SetBool(isGroundedHash, isGrounded);
         }
 
-        // 3. ระบบกระโดด
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        // 3. ระบบกระโดด (รับค่าเฉพาะตอนถูกสิง)
+        if (isPossessed && Input.GetButtonDown("Jump") && isGrounded)
         {
             // ดึงค่าที่คำนวณไว้ล่วงหน้ามาใช้ทันที ไม่ต้องรันสูตร Mathf.Sqrt ซ้ำ
             velocity.y = calculatedJumpVelocity;

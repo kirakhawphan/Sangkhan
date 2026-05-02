@@ -42,8 +42,9 @@ public class PossessionManager : MonoBehaviour
 
         if (currentBody != null && playerCamera != null)
         {
-            // เซ็ตกล้องให้ตัวละครเริ่มต้น
+            // เซ็ตกล้องและสถานะให้ตัวละครเริ่มต้น
             currentBody.SetupCamera(playerCamera.transform);
+            currentBody.isPossessed = true;
             currentBody.enabled = true; // มั่นใจว่าเปิดใช้งาน
         }
     }
@@ -130,10 +131,11 @@ public class PossessionManager : MonoBehaviour
         // 1. ดึงสคริปต์ Playermovement ของร่างเป้าหมาย
         if (targetEntity.TryGetComponent(out Playermovement newBody))
         {
-            // 2. ปิดสคริปต์ตัวเดิม
+            // 2. ถอดสิทธิ์ตัวเดิม (ให้เหลือแต่ระบบ Gravity)
             if (currentBody != null)
             {
-                currentBody.enabled = false;
+                currentBody.isPossessed = false;
+                // สังเกตว่าเราไม่ได้ตั้ง enabled = false แล้ว เพื่อให้ตัวละครเก่ายังคงตกลงพื้นได้!
                 
                 // หากมี Animator สั่งให้มันหยุดเดิน
                 Animator oldAnim = currentBody.GetComponentInChildren<Animator>();
@@ -146,7 +148,8 @@ public class PossessionManager : MonoBehaviour
             // 3. เซ็ตค่าให้ตัวใหม่ (ส่งมอบกล้องไปให้)
             newBody.SetupCamera(playerCamera.transform);
 
-            // 4. เปิดใช้งานตัวใหม่
+            // 4. มอบสิทธิ์ใช้งานตัวใหม่
+            newBody.isPossessed = true;
             newBody.enabled = true;
 
             // 5. อัปเดตตัวแปร currentBody เป็นตัวใหม่
