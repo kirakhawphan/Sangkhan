@@ -37,6 +37,9 @@ public class EnemyMovement : MonoBehaviour
 
     private void Update()
     {
+        // ถ้าถูกผู้เล่นสิงร่าง (NavMeshAgent ถูกปิด) ให้หยุดซิงค์แอนิเมชัน เพื่อไม่ให้ไปแย่งทำงานกับสคริปต์ Playermovement
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
         // ==========================================
         // Animation Sync: ซิงค์แอนิเมชันตามความเร็วจริง
         // ==========================================

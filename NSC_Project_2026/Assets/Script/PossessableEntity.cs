@@ -24,6 +24,27 @@ public class PossessableEntity : MonoBehaviour
     [SerializeField, Tooltip("ระบบฟิสิกส์การชนและการเดินของผู้เล่น (ถ้ามี)")]
     private CharacterController characterController;
 
+    [Header("Targeting")]
+    [SerializeField, Tooltip("GameObject เปล่าๆ ที่มี Collider รับเลเซอร์เรดาร์")]
+    private GameObject radarTarget;
+
+    // --- แคชค่า Layer ไว้ใช้งาน (Performance Optimization) ---
+    private int playerLayerCache = -1;
+    private int possessableLayerCache = -1;
+
+    private void Awake()
+    {
+        // ดึงค่า Layer ออกมาเก็บไว้ในตัวแปรแค่ครั้งเดียวตอนเริ่มเกม เพื่อไม่ต้องเรียก NameToLayer ซ้ำๆ
+        playerLayerCache = LayerMask.NameToLayer("Player");
+        possessableLayerCache = LayerMask.NameToLayer("Possessable");
+
+        if (playerLayerCache == -1)
+            Debug.LogWarning("[PossessableEntity] ไม่พบ Layer ที่ชื่อ 'Player' ในโปรเจกต์!", this);
+            
+        if (possessableLayerCache == -1)
+            Debug.LogWarning("[PossessableEntity] ไม่พบ Layer ที่ชื่อ 'Possessable' ในโปรเจกต์!", this);
+    }
+
     /// <summary>
     /// ฟังก์ชันทำงานเมื่อผู้เล่นเข้ามาสิงร่างนี้
     /// </summary>
@@ -53,8 +74,11 @@ public class PossessableEntity : MonoBehaviour
             playerController.enabled = true;
         }
 
-        // 5. เปลี่ยน Layer ของตัวละครเป็น "Player"
-        gameObject.layer = LayerMask.NameToLayer("Player");
+        // 5. เปลี่ยน Layer ของเป้าหมายเรดาร์เป็น "Player"
+        if (radarTarget != null && playerLayerCache != -1)
+        {
+            radarTarget.layer = playerLayerCache;
+        }
     }
 
     /// <summary>
@@ -86,7 +110,10 @@ public class PossessableEntity : MonoBehaviour
             aiBrain.enabled = true;
         }
 
-        // 5. เปลี่ยน Layer ของตัวละครกลับเป็น "Possessable"
-        gameObject.layer = LayerMask.NameToLayer("Possessable");
+        // 5. เปลี่ยน Layer ของเป้าหมายเรดาร์กลับเป็น "Possessable"
+        if (radarTarget != null && possessableLayerCache != -1)
+        {
+            radarTarget.layer = possessableLayerCache;
+        }
     }
 }

@@ -33,6 +33,11 @@ public class TargetDetector
     [Tooltip("Layer ของเป้าหมาย (สำคัญ: ต้องตั้งให้ตรงกับ Layer ของ PossessableEntity)")]
     public LayerMask targetLayer;
 
+    [Header("Performance Optimization")]
+    [Tooltip("ระยะเวลาเว้นว่างระหว่างการสแกน (วินาที) เช่น 0.2 = สแกน 5 ครั้งต่อวินาที")]
+    [SerializeField] private float scanInterval = 0.2f;
+    private float scanTimer;
+
     // ==================== ผลลัพธ์ล่าสุด (Read Only จากภายนอก) ====================
 
     public PossessableEntity CurrentTarget { get; private set; }
@@ -53,15 +58,25 @@ public class TargetDetector
     /// <param name="excludeRoot">Transform ที่ต้องการกรองออก (เช่น ตัวผู้เล่นเอง) ส่ง null ได้ถ้าไม่ต้องกรอง</param>
     public void UpdateDetection(Transform origin, Vector3 direction, Transform excludeRoot)
     {
-        switch (detectionMode)
-        {
-            case DetectionMode.SphereCast:
-                DetectBySphereCast(origin.position, direction, excludeRoot);
-                break;
+        // 1. ลดเวลา Timer ลงตามเฟรมเรตจริง
+        scanTimer -= Time.deltaTime;
 
-            case DetectionMode.Sphere:
-                DetectBySphere(origin.position, excludeRoot);
-                break;
+        // 2. ถ้าเวลายังไม่ถึง 0 ให้ข้ามการสแกนไปเลย (ประหยัด CPU ไม่ต้องสแกนทุกเฟรม)
+        if (scanTimer <= 0f)
+        {
+            switch (detectionMode)
+            {
+                case DetectionMode.SphereCast:
+                    DetectBySphereCast(origin.position, direction, excludeRoot);
+                    break;
+
+                case DetectionMode.Sphere:
+                    DetectBySphere(origin.position, excludeRoot);
+                    break;
+            }
+
+            // 3. เมื่อสแกนเสร็จแล้ว ให้ตั้งเวลานับถอยหลังใหม่สำหรับการสแกนรอบถัดไป
+            scanTimer = scanInterval;
         }
     }
 
