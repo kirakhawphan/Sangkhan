@@ -1313,12 +1313,12 @@ MonoBehaviour:
   cameraTransitionDuration: 0.4
   useCooldown: 0
   cooldownDuration: 3
-  maxDetectionDistance: 15
-  aimRadius: 1.5
-  possessableLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  currentTarget: {fileID: 0}
+  targetDetector:
+    maxDetectionDistance: 15
+    aimRadius: 1.5
+    targetLayer:
+      serializedVersion: 2
+      m_Bits: 128
 --- !u!4 &1821828769
 Transform:
   m_ObjectHideFlags: 0

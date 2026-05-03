@@ -27,23 +27,9 @@ public class PossessionManager : MonoBehaviour
     [SerializeField, Tooltip("ระยะเวลาคูลดาวน์หลังสิงร่างสำเร็จ (วินาที)")]
     private float cooldownDuration = 3f;
 
-    [Header("Detection Settings")]
-    [SerializeField, Tooltip("ระยะการตรวจจับเป้าหมายที่อยู่หน้ากล้อง (ความไกล)")]
-    private float maxDetectionDistance = 15f;
-    
-    [SerializeField, Tooltip("ความกว้างของเป้าเล็ง (ยิ่งมากยิ่งเล็งโดนง่ายโดยไม่ต้องหันหน้าตรงเป๊ะ)")]
-    private float aimRadius = 1.5f;
-
-    [SerializeField, Tooltip("Layer ของเป้าหมาย (สำคัญ: ต้องตั้งให้ตรงกับ Layer ของ PossessableEntity)")]
-    private LayerMask possessableLayer; 
-
-    [Header("Target Info (Read Only)")]
-    [SerializeField, Tooltip("เป้าหมายที่อยู่หน้ากล้องและใกล้ที่สุดในขณะนี้")]
-    private PossessableEntity currentTarget;
-
-    // --- Optimization Caching ---
-    private readonly RaycastHit[] hitResults = new RaycastHit[10]; 
-    private readonly Vector3 screenCenter = new Vector3(0.5f, 0.5f, 0f);
+    [Header("Target Detection")]
+    [SerializeField, Tooltip("ระบบตรวจจับเป้าหมาย (ตั้งค่าระยะ, รัศมี, Layer ได้ใน Inspector)")]
+    private TargetDetector targetDetector;
 
     // --- Smooth Camera Transition State ---
     private bool isTransitioning = false;
@@ -84,9 +70,9 @@ public class PossessionManager : MonoBehaviour
         // ปิดระบบ Target Detection ขณะคูลดาวน์
         if (IsOnCooldown)
         {
-            if (currentTarget != null)
+            if (targetDetector.CurrentTarget != null)
             {
-                currentTarget = null;
+                targetDetector.ClearTarget();
                 if (uiController != null) uiController.HideUI();
             }
         }
@@ -108,53 +94,22 @@ public class PossessionManager : MonoBehaviour
 
     private void UpdateTargetDetection()
     {
-        Ray ray = playerCamera.ViewportPointToRay(screenCenter);
-        
-        // วาดเส้นสีแดงในหน้า Scene View ตลอดเวลาเพื่อให้เห็นทิศทางของ Ray
-        Debug.DrawRay(ray.origin, ray.direction * maxDetectionDistance, Color.red);
-        
-        int hitCount = Physics.SphereCastNonAlloc(ray, aimRadius, hitResults, maxDetectionDistance, possessableLayer);
-        
-        PossessableEntity closestEntity = null;
-        float closestDistance = float.MaxValue;
+        // สร้าง Ray จากกึ่งกลางหน้าจอของกล้องผู้เล่น
+        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider hitCollider = hitResults[i].collider;
-            
-            // ใช้ GetComponentInParent เพื่อดักจับกรณีที่ Collider อยู่ที่ลูก แต่สคริปต์อยู่แม่
-            PossessableEntity entity = hitCollider.GetComponentInParent<PossessableEntity>();
-            
-            if (entity != null)
-            {
-                // ตรวจสอบว่าไม่ใช่ตัวเอง (ตรวจสอบทั้ง GameObject และ Hierarchy แม่ลูก)
-                if (currentBody != null)
-                {
-                    if (entity.gameObject == currentBody.gameObject || 
-                        entity.transform.IsChildOf(currentBody.transform) || 
-                        currentBody.transform.IsChildOf(entity.transform))
-                    {
-                        continue;
-                    }
-                }
+        // มอบหมายให้ TargetDetector ทำงาน (รองรับทั้ง Player และ AI)
+        targetDetector.UpdateDetection(
+            ray.origin,
+            ray.direction,
+            currentBody != null ? currentBody.transform : null
+        );
 
-                float distance = hitResults[i].distance;
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestEntity = entity;
-                }
-            }
-        }
-
-        currentTarget = closestEntity;
-
-        // ควบคุม UI
+        // ควบคุม UI ตามผลลัพธ์จาก TargetDetector
         if (uiController != null)
         {
-            if (currentTarget != null)
+            if (targetDetector.CurrentTarget != null)
             {
-                uiController.ShowUI(currentTarget.transform);
+                uiController.ShowUI(targetDetector.CurrentTarget.transform);
             }
             else
             {
@@ -174,9 +129,9 @@ public class PossessionManager : MonoBehaviour
                 return;
             }
 
-            if (currentTarget != null)
+            if (targetDetector.CurrentTarget != null)
             {
-                ExecutePossession(currentTarget);
+                ExecutePossession(targetDetector.CurrentTarget);
 
                 // เริ่มคูลดาวน์หลังสิงร่างสำเร็จ
                 if (useCooldown)
@@ -240,7 +195,7 @@ public class PossessionManager : MonoBehaviour
             currentBody = newBody;
 
             // ซ่อน UI หลังสิงร่างสำเร็จ
-            currentTarget = null;
+            targetDetector.ClearTarget();
             if (uiController != null) uiController.HideUI();
         }
         else
@@ -322,13 +277,10 @@ public class PossessionManager : MonoBehaviour
     // เปลี่ยนมาใช้ OnDrawGizmos (ไม่ต้องกดคลิกวัตถุก็เห็นเส้นเหลืองได้)
     private void OnDrawGizmos()
     {
-        if (playerCamera != null)
+        if (playerCamera != null && targetDetector != null)
         {
-            Gizmos.color = Color.yellow;
             Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            
-            Gizmos.DrawRay(ray.origin, ray.direction * maxDetectionDistance);
-            Gizmos.DrawWireSphere(ray.origin + (ray.direction * maxDetectionDistance), aimRadius);
+            targetDetector.DrawGizmos(ray.origin, ray.direction);
         }
     }
 }
