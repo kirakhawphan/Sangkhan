@@ -1091,7 +1091,7 @@ MonoBehaviour:
   uiController: {fileID: 1008094496}
   cameraTransitionDuration: 0.4
   possessionCooldown:
-    duration: 0
+    duration: 2
   targetDetector:
     detectionMode: 0
     maxDetectionDistance: 15
@@ -1238,6 +1238,18 @@ PrefabInstance:
     - target: {fileID: 1903325291844539813, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
       propertyPath: m_Name
       value: Elite
+      objectReference: {fileID: 0}
+    - target: {fileID: 8036762108011580124, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8036762108011580124, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8036762108011580124, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
