@@ -942,7 +942,6 @@ MonoBehaviour:
   rotationSpeed: 180
   transitionDuration: 0.2
   maxScale: 1.5
-  baseUIScale: 1
 --- !u!114 &1008094497
 MonoBehaviour:
   m_ObjectHideFlags: 0

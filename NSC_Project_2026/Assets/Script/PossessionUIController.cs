@@ -23,6 +23,9 @@ public class PossessionUIController : MonoBehaviour
     [SerializeField, Tooltip("ขนาดใหญ่สุดตอนเพิ่งปรากฏ (จะค่อยๆ หดลงมาที่ 1)")]
     private float maxScale = 1.5f;
 
+    [SerializeField, Tooltip("ขนาดพื้นฐานของ UI (ใช้ปรับจูนก่อนคูณกับสเกลเป้าหมาย)")]
+    private float baseUIScale = 1f;
+
     // --- Caching Variables ---
     private Transform currentTarget;
     private Canvas parentCanvas;
@@ -36,6 +39,7 @@ public class PossessionUIController : MonoBehaviour
     private float transitionProgress = 0f; // 0 = หายไปสนิท, 1 = โชว์เต็มที่
     private int targetState = 0; // 0 = กำลังซ่อน, 1 = กำลังโชว์
     private float currentZRotation = 0f; // เก็บค่าองศาการหมุนสะสม
+    private float cachedTargetScaleY = 1f; // แคชสเกล Y ของเป้าหมาย เพื่อปรับขนาด UI ตาม
 
     // --- Optimization (Zero Allocation) ---
     private static readonly Vector2 OutOfBoundsPos = new Vector2(-9999f, -9999f);
@@ -126,6 +130,7 @@ public class PossessionUIController : MonoBehaviour
         if (targetTransform == null) return;
 
         currentTarget = targetTransform;
+        cachedTargetScaleY = targetTransform.lossyScale.y; // อัพเดทสเกลทันทีตอนเปลี่ยนเป้า
         
         if (targetState != 1)
         {
@@ -174,8 +179,9 @@ public class PossessionUIController : MonoBehaviour
         }
         
         // 2. ทำสเกล (ใช้ Struct ไม่เกิด Garbage)
-        float currentScale = Mathf.Lerp(maxScale, 1f, transitionProgress);
-        uiIconRect.localScale = new Vector3(currentScale, currentScale, currentScale);
+        float transitionScale = Mathf.Lerp(maxScale, 1f, transitionProgress);
+        float finalScale = transitionScale * baseUIScale * cachedTargetScaleY;
+        uiIconRect.localScale = new Vector3(finalScale, finalScale, finalScale);
     }
 
     private void HandleRotation()
@@ -195,8 +201,11 @@ public class PossessionUIController : MonoBehaviour
     {
         // ใช้ lossyScale ของเป้าหมายมาคูณ worldOffset
         // ตัวใหญ่ (Scale สูง) = UI ลอยสูงขึ้น, ตัวเล็ก (Scale ต่ำ) = UI ลอยต่ำลง
-        float targetScale = currentTarget.lossyScale.y;
-        Vector3 scaledOffset = worldOffset * targetScale;
+        cachedTargetScaleY = currentTarget.lossyScale.y; // อัพเดทสเกลทุกเฟรม (รองรับกรณีตัวละครเปลี่ยนขนาด)
+        Vector3 scaledOffset = worldOffset * cachedTargetScaleY;
+        
+        // อัพเดทขนาด UI ตามสเกลเป้าหมายแบบ Real-time
+        ApplyTransitionEffects();
         
         Vector3 worldPos = currentTarget.position + scaledOffset;
         
