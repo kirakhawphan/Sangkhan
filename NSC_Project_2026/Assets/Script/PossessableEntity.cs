@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 // นำสคริปต์นี้ไปแปะไว้ที่ GameObject ตัวละครอื่นๆ ที่ต้องการให้ผู้เล่นสามารถสิงร่างได้
 public class PossessableEntity : MonoBehaviour
@@ -9,4 +10,83 @@ public class PossessableEntity : MonoBehaviour
     
     // Property สำหรับให้ภายนอกอ่านค่าได้อย่างเดียว (Encapsulation)
     public string EntityName => entityName;
+
+    [Header("Possession Switch Components")]
+    [SerializeField, Tooltip("ระบบสมอง AI ที่ควบคุมพฤติกรรม")]
+    private EnemyBrain aiBrain;
+
+    [SerializeField, Tooltip("ระบบหาเส้นทางของ AI")]
+    private NavMeshAgent navAgent;
+
+    [SerializeField, Tooltip("ระบบควบคุมตัวละครของผู้เล่น")]
+    private MonoBehaviour playerController;
+
+    [SerializeField, Tooltip("ระบบฟิสิกส์การชนและการเดินของผู้เล่น (ถ้ามี)")]
+    private CharacterController characterController;
+
+    /// <summary>
+    /// ฟังก์ชันทำงานเมื่อผู้เล่นเข้ามาสิงร่างนี้
+    /// </summary>
+    public void OnPossessed()
+    {
+        // 1. ปิดระบบสมอง AI (enabled = false)
+        if (aiBrain != null)
+        {
+            aiBrain.enabled = false;
+        }
+
+        // 2. ปิด NavMeshAgent เพื่อไม่ให้แย่งผู้เล่นเดิน
+        if (navAgent != null)
+        {
+            navAgent.enabled = false;
+        }
+
+        // 3. เปิดระบบฟิสิกส์ CharacterController ให้ผู้เล่นใช้เดิน
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+        }
+
+        // 4. เปิดระบบควบคุมของผู้เล่น (enabled = true)
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+        }
+
+        // 5. เปลี่ยน Layer ของตัวละครเป็น "Player"
+        gameObject.layer = LayerMask.NameToLayer("Player");
+    }
+
+    /// <summary>
+    /// ฟังก์ชันทำงานเมื่อผู้เล่นออกจากร่างนี้ (ดึงปลั๊ก)
+    /// </summary>
+    public void OnUnpossessed()
+    {
+        // 1. ปิดระบบควบคุมของผู้เล่น
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+        }
+
+        // 2. ปิดระบบฟิสิกส์ CharacterController ไม่ให้แย่ง AI เดิน
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        // 3. เปิด NavMeshAgent เพื่อเตรียมให้ AI กลับมาใช้งาน
+        if (navAgent != null)
+        {
+            navAgent.enabled = true;
+        }
+
+        // 4. เปิดระบบสมอง AI ให้กลับมาคิดและทำงาน
+        if (aiBrain != null)
+        {
+            aiBrain.enabled = true;
+        }
+
+        // 5. เปลี่ยน Layer ของตัวละครกลับเป็น "Possessable"
+        gameObject.layer = LayerMask.NameToLayer("Possessable");
+    }
 }

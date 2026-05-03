@@ -145,12 +145,17 @@ public class PossessionManager : MonoBehaviour
         // 1. ดึงสคริปต์ Playermovement ของร่างเป้าหมาย
         if (targetEntity.TryGetComponent(out Playermovement newBody))
         {
-            // 2. ถอดสิทธิ์ตัวเดิม (ให้เหลือแต่ระบบ Gravity)
+            // 2. ถอดสิทธิ์ตัวเดิม
             if (currentBody != null)
             {
                 currentBody.isPossessed = false;
                 currentBody.cameraLocked = false; // ปลดล็อกกล้องตัวเก่า
-                // สังเกตว่าเราไม่ได้ตั้ง enabled = false แล้ว เพื่อให้ตัวละครเก่ายังคงตกลงพื้นได้!
+                
+                // หากตัวเก่ามี PossessableEntity ให้เรียก OnUnpossessed เพื่อคืนชีพ AI
+                if (currentBody.TryGetComponent(out PossessableEntity oldEntity))
+                {
+                    oldEntity.OnUnpossessed();
+                }
                 
                 // หากมี Animator สั่งให้มันหยุดเดิน
                 Animator oldAnim = currentBody.GetComponentInChildren<Animator>();
@@ -166,6 +171,9 @@ public class PossessionManager : MonoBehaviour
             // 4. มอบสิทธิ์ใช้งานตัวใหม่
             newBody.isPossessed = true;
             newBody.enabled = true;
+            
+            // เรียกฟังก์ชัน OnPossessed เพื่อให้ AI หลับ และสลับโหมด
+            targetEntity.OnPossessed();
 
             // 5. เริ่มระบบ Smooth Camera Transition (ถ้าเปิดใช้งาน)
             if (cameraTransitionDuration > 0f)
