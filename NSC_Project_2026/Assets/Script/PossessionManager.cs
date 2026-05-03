@@ -94,12 +94,12 @@ public class PossessionManager : MonoBehaviour
 
     private void UpdateTargetDetection()
     {
-        // สร้าง Ray จากกึ่งกลางหน้าจอของกล้องผู้เล่น
+        // สร้าง Ray จากกึ่งกลางหน้าจอของกล้องผู้เล่น (ใช้ direction ของ Camera)
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-        // มอบหมายให้ TargetDetector ทำงาน (รองรับทั้ง Player และ AI)
+        // มอบหมายให้ TargetDetector ทำงาน (ส่ง Transform แทน Vector3 ตาม API ใหม่)
         targetDetector.UpdateDetection(
-            ray.origin,
+            playerCamera.transform,
             ray.direction,
             currentBody != null ? currentBody.transform : null
         );

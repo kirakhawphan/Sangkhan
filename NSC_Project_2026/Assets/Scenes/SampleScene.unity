@@ -1314,6 +1314,7 @@ MonoBehaviour:
   useCooldown: 0
   cooldownDuration: 3
   targetDetector:
+    detectionMode: 0
     maxDetectionDistance: 15
     aimRadius: 1.5
     targetLayer:
