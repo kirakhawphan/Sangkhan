@@ -14,10 +14,7 @@ public class PossessionManager : MonoBehaviour
     private PossessionUIController uiController;
 
     [Header("Smooth Camera Transition")]
-    [SerializeField, Tooltip("เปิด/ปิด ระบบเคลื่อนกล้องแบบ Smooth ตอนสิงร่าง (ปิดแล้วกล้องจะวาร์ปไปทันที)")]
-    private bool useSmoothCameraTransition = true;
-
-    [SerializeField, Tooltip("ระยะเวลาที่กล้องใช้เคลื่อนที่ไปยังร่างใหม่ (วินาที)")]
+    [SerializeField, Tooltip("ระยะเวลาที่กล้องใช้เคลื่อนที่ไปยังร่างใหม่ (วินาที)\nใส่ 0 เพื่อปิดระบบนี้และให้กล้องวาร์ปไปทันที")]
     private float cameraTransitionDuration = 0.6f;
 
     [Header("Cooldown")]
@@ -171,7 +168,7 @@ public class PossessionManager : MonoBehaviour
             newBody.enabled = true;
 
             // 5. เริ่มระบบ Smooth Camera Transition (ถ้าเปิดใช้งาน)
-            if (useSmoothCameraTransition)
+            if (cameraTransitionDuration > 0f)
             {
                 StartCameraTransition(newBody);
             }
