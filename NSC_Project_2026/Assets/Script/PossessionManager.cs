@@ -21,11 +21,8 @@ public class PossessionManager : MonoBehaviour
     private float cameraTransitionDuration = 0.6f;
 
     [Header("Cooldown")]
-    [SerializeField, Tooltip("เปิด/ปิด ระบบคูลดาวน์หลังสิงร่าง")]
-    private bool useCooldown = true;
-
-    [SerializeField, Tooltip("ระยะเวลาคูลดาวน์หลังสิงร่างสำเร็จ (วินาที)")]
-    private float cooldownDuration = 3f;
+    [SerializeField, Tooltip("ระบบคูลดาวน์หลังสิงร่าง (ตั้งค่า duration ได้ใน Inspector)")]
+    private Cooldown possessionCooldown;
 
     [Header("Target Detection")]
     [SerializeField, Tooltip("ระบบตรวจจับเป้าหมาย (ตั้งค่าระยะ, รัศมี, Layer ได้ใน Inspector)")]
@@ -37,9 +34,6 @@ public class PossessionManager : MonoBehaviour
     private Vector3 transitionStartPos;
     private Quaternion transitionStartRot;
     private Transform cameraTransformCache;
-
-    // --- Cooldown State ---
-    private float cooldownTimer = 0f;
 
     private void Awake()
     {
@@ -61,14 +55,8 @@ public class PossessionManager : MonoBehaviour
 
     private void Update()
     {
-        // นับถอยหลังคูลดาวน์
-        if (cooldownTimer > 0f)
-        {
-            cooldownTimer -= Time.deltaTime;
-        }
-
         // ปิดระบบ Target Detection ขณะคูลดาวน์
-        if (IsOnCooldown)
+        if (!possessionCooldown.IsReady())
         {
             if (targetDetector.CurrentTarget != null)
             {
@@ -123,9 +111,9 @@ public class PossessionManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             // ตรวจสอบคูลดาวน์
-            if (useCooldown && cooldownTimer > 0f)
+            if (!possessionCooldown.IsReady())
             {
-                Debug.Log($"ยังคูลดาวน์อยู่! เหลือเวลา {cooldownTimer:F1} วินาที");
+                Debug.Log("ยังคูลดาวน์อยู่! รอสักครู่...");
                 return;
             }
 
@@ -134,10 +122,7 @@ public class PossessionManager : MonoBehaviour
                 ExecutePossession(targetDetector.CurrentTarget);
 
                 // เริ่มคูลดาวน์หลังสิงร่างสำเร็จ
-                if (useCooldown)
-                {
-                    cooldownTimer = cooldownDuration;
-                }
+                possessionCooldown.StartCooldown();
             }
             else
             {
@@ -149,12 +134,12 @@ public class PossessionManager : MonoBehaviour
     /// <summary>
     /// ตรวจสอบว่ายังอยู่ในช่วงคูลดาวน์หรือไม่ (สำหรับ UI อื่นๆ ดึงไปใช้ได้)
     /// </summary>
-    public bool IsOnCooldown => useCooldown && cooldownTimer > 0f;
+    public bool IsOnCooldown => !possessionCooldown.IsReady();
 
     /// <summary>
     /// คืนค่าเปอร์เซ็นต์คูลดาวน์ที่เหลือ (1 = เพิ่งเริ่ม, 0 = หมดแล้ว) สำหรับ UI แสดง Cooldown Indicator
     /// </summary>
-    public float CooldownProgress => useCooldown && cooldownDuration > 0f ? Mathf.Clamp01(cooldownTimer / cooldownDuration) : 0f;
+    public float CooldownProgress => possessionCooldown.Progress;
 
     private void ExecutePossession(PossessableEntity targetEntity)
     {
