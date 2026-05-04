@@ -114,6 +114,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -2717395650310496025, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 4d3828f065a3e1a41b23606d02024b77, type: 2}
     - target: {fileID: 919132149155446097, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
       propertyPath: m_Name
       value: Elite
@@ -184,7 +188,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Center: {x: 0, y: 1.07, z: 0}
 --- !u!114 &4454865198815418803
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -231,6 +235,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PossessableEntity
   entityName: Unknown Entity
+  aiBrain: {fileID: 0}
+  navAgent: {fileID: 0}
+  playerController: {fileID: 0}
+  characterController: {fileID: 0}
+  radarTarget: {fileID: 0}
 --- !u!95 &5170699981537187173 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}

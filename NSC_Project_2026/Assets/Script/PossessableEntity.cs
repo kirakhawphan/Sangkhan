@@ -121,13 +121,6 @@ public class PossessableEntity : MonoBehaviour
             characterController.enabled = false;
         }
 
-        // ขั้นที่ 2: ดึงพิกัด (Snap) ให้ล็อกติดกับ NavMesh ชัวร์ๆ เผื่อพื้นฐานขรุขระ
-        // ค้นหาจุด NavMesh ที่ใกล้ที่สุดในระยะ 2 เมตร
-        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
-        {
-            transform.position = hit.position; // วาร์ปขยับนิดเดียวให้เท้าติดเนียนๆ
-        }
-
         // ขั้นที่ 3: เปิดระบบเดินของ AI
         if (navAgent != null)
         {
