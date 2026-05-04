@@ -86,31 +86,61 @@ public class PossessableEntity : MonoBehaviour
     /// </summary>
     public void OnUnpossessed()
     {
-        // 1. ปิดระบบควบคุมของผู้เล่น
+        // 1. ปิดระบบควบคุมของผู้เล่นทันที
         if (playerController != null)
         {
             playerController.enabled = false;
         }
 
-        // 2. ปิดระบบฟิสิกส์ CharacterController ไม่ให้แย่ง AI เดิน
+        // 2. เริ่ม Coroutine เพื่อจัดการการตกสู่พื้นอย่างสมจริงก่อนคืนชีพ AI
+        StartCoroutine(WaitForGroundAndEnableAI());
+    }
+
+    /// <summary>
+    /// Coroutine อัจฉริยะสำหรับดึงตัวละครลงพื้นและเปิด AI (ป้องกันบั๊ก NavMesh ลอยกลางอากาศ)
+    /// </summary>
+    private System.Collections.IEnumerator WaitForGroundAndEnableAI()
+    {
+        // ขั้นที่ 1: ปล่อยให้ร่างร่วงลงพื้นตามแรงโน้มถ่วง (ใช้ CharacterController)
         if (characterController != null)
         {
+            characterController.enabled = true;
+            
+            float fallTimeout = 3f; // ป้องกันบั๊กลูปอนันต์เผื่อตกแมพ
+            
+            // ลูปทำงานจนกว่าจะแตะพื้น (isGrounded) หรือหมดเวลา
+            while (!characterController.isGrounded && fallTimeout > 0f)
+            {
+                // SimpleMove(Vector3.zero) จะไม่เดินแนวราบ แต่จะแถมแรงโน้มถ่วง (Gravity) ให้ฟรีๆ
+                characterController.SimpleMove(Vector3.zero);
+                fallTimeout -= Time.deltaTime;
+                yield return null; // รอเฟรมถัดไป
+            }
+
+            // พอแตะพื้นแล้ว (หรือหมดเวลา) ให้ปิดทิ้งเพื่อกันไปตีกับ NavMeshAgent
             characterController.enabled = false;
         }
 
-        // 3. เปิด NavMeshAgent เพื่อเตรียมให้ AI กลับมาใช้งาน
+        // ขั้นที่ 2: ดึงพิกัด (Snap) ให้ล็อกติดกับ NavMesh ชัวร์ๆ เผื่อพื้นฐานขรุขระ
+        // ค้นหาจุด NavMesh ที่ใกล้ที่สุดในระยะ 2 เมตร
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+        {
+            transform.position = hit.position; // วาร์ปขยับนิดเดียวให้เท้าติดเนียนๆ
+        }
+
+        // ขั้นที่ 3: เปิดระบบเดินของ AI
         if (navAgent != null)
         {
             navAgent.enabled = true;
         }
 
-        // 4. เปิดระบบสมอง AI ให้กลับมาคิดและทำงาน
+        // ขั้นที่ 4: เปิดระบบสมอง AI ให้กลับมาไล่ล่าหรือเฝ้ายาม
         if (aiBrain != null)
         {
             aiBrain.enabled = true;
         }
 
-        // 5. เปลี่ยน Layer ของเป้าหมายเรดาร์กลับเป็น "Possessable"
+        // ขั้นที่ 5: เปลี่ยน Layer เรดาร์กลับคืนให้กลายเป็นเป้าหมายรอให้คนอื่นมาสิงต่อ
         if (radarTarget != null && possessableLayerCache != -1)
         {
             radarTarget.layer = possessableLayerCache;
