@@ -47,6 +47,47 @@ public class HealthBarUI : MonoBehaviour
         }
     }
 
+    // ==================== Public API สำหรับระบบสิงร่าง ====================
+
+    /// <summary>
+    /// สลับเป้าหมายหลอดเลือดไปยัง HealthSystem ตัวใหม่
+    /// ใช้เรียกจาก PossessionManager เมื่อสิงร่างสำเร็จ
+    /// </summary>
+    /// <param name="newHealthSystem">HealthSystem ของร่างใหม่ที่เพิ่งสิง (ส่ง null ได้ถ้าต้องการยกเลิกการติดตาม)</param>
+    public void SetTargetHealthSystem(HealthSystem newHealthSystem)
+    {
+        // --- ขั้นตอนที่ 1: ตัดการเชื่อมต่อจากเป้าหมายเดิม ---
+        // Unsubscribe Event จากตัวเก่าก่อน เพื่อป้องกัน Memory Leak
+        if (targetHealthSystem != null)
+        {
+            targetHealthSystem.OnHealthChanged -= HandleHealthChanged;
+        }
+
+        // --- ขั้นตอนที่ 2: หยุด Coroutine Smooth Drain ที่ค้างอยู่ ---
+        // ป้องกันไม่ให้ Animation หลอดเลือดของร่างเก่ายังไหลอยู่
+        if (smoothDrainCoroutine != null)
+        {
+            StopCoroutine(smoothDrainCoroutine);
+            smoothDrainCoroutine = null;
+        }
+
+        // --- ขั้นตอนที่ 3: เปลี่ยนเป้าหมายเป็นตัวใหม่ ---
+        targetHealthSystem = newHealthSystem;
+
+        // --- ขั้นตอนที่ 4: Subscribe Event ของเป้าหมายใหม่ ---
+        if (targetHealthSystem != null)
+        {
+            targetHealthSystem.OnHealthChanged += HandleHealthChanged;
+
+            // --- ขั้นตอนที่ 5: อัปเดตหลอดเลือดทันที (Snap) ไม่ต้องรอ Smooth ---
+            // ใช้ Property เพื่อดึงค่า % เลือดปัจจุบันของร่างใหม่
+            if (healthFillImage != null)
+            {
+                healthFillImage.fillAmount = targetHealthSystem.CurrentHealthPercentage;
+            }
+        }
+    }
+
     /// <summary>
     /// ฟังก์ชันที่ทำงานทันทีเมื่อ Event OnHealthChanged ถูก Invoke จาก HealthSystem
     /// </summary>

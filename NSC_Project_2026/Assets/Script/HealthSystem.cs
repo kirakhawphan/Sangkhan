@@ -3,8 +3,12 @@ using UnityEngine;
 // ระบบเลือดที่เป็นอิสระ (Decoupled) ไม่ผูกกับคลาส Player หรือ Enemy โดยตรง
 public class HealthSystem : MonoBehaviour, IDamageable
 {
+    [Header("Settings")]
     [SerializeField] private float maxHealth = 100f;
-    private float currentHealth;
+
+    [Header("Debug (ดูค่าได้ตอน Play Mode)")]
+    [SerializeField] private float currentHealth;
+    [SerializeField] private float healthPercentage;
 
     // อีเวนต์สำหรับส่งค่า % เลือด (0.0 ถึง 1.0) ไปให้ UI หรือระบบอื่นที่ติดตามอยู่
     public event System.Action<float> OnHealthChanged;
@@ -13,10 +17,15 @@ public class HealthSystem : MonoBehaviour, IDamageable
 
     private bool isDead = false;
 
+    // Property สาธารณะ เพื่อให้สคริปต์ภายนอก (เช่น HealthBarUI) ดึงค่า % เลือดปัจจุบันได้ทันที
+    // ใช้ตอนสลับเป้าหมาย (Possession) เพื่ออัปเดตหลอดเลือดแบบไม่ต้องรอ Event
+    public float CurrentHealthPercentage => GetHealthPercentage();
+
     private void Awake()
     {
         // กำหนดเลือดให้เต็มเมื่อเริ่มต้น
         currentHealth = maxHealth;
+        healthPercentage = GetHealthPercentage();
     }
 
     private void Start()
@@ -30,20 +39,39 @@ public class HealthSystem : MonoBehaviour, IDamageable
     {
         if (isDead) return;
 
-        // ลดเลือดตามจำนวนดาเมจ
-        currentHealth -= info.damageAmount;
-        
-        // ป้องกันไม่ให้เลือดติดลบ (Clamp ไว้ที่ 0)
-        currentHealth = Mathf.Max(currentHealth, 0f);
+        // ลดเลือดตามจำนวนดาเมจ แล้ว Clamp ไว้ในช่วง [0, maxHealth]
+        currentHealth = Mathf.Clamp(currentHealth - info.damageAmount, 0f, maxHealth);
+
+        // อัปเดตค่า Debug ใน Inspector
+        healthPercentage = GetHealthPercentage();
 
         // ยิงอีเวนต์แจ้งเตือนว่าเลือดเปลี่ยนไปเท่าไหร่แล้ว
-        OnHealthChanged?.Invoke(GetHealthPercentage());
+        OnHealthChanged?.Invoke(healthPercentage);
 
         // ตรวจสอบการตาย
         if (currentHealth <= 0f)
         {
             Die();
         }
+    }
+
+    /// <summary>
+    /// ฟังก์ชันฮีลเลือด — Clamp ไว้ไม่ให้เกิน maxHealth
+    /// เรียกใช้จากสคริปต์ภายนอกได้เลย เช่น HealZone, Potion, Skill
+    /// </summary>
+    /// <param name="amount">จำนวนเลือดที่จะฮีล (ค่าบวก)</param>
+    public void Heal(float amount)
+    {
+        if (isDead) return;
+
+        // เพิ่มเลือด แล้ว Clamp ไว้ไม่ให้เกิน maxHealth
+        currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
+
+        // อัปเดตค่า Debug ใน Inspector
+        healthPercentage = GetHealthPercentage();
+
+        // ยิงอีเวนต์ให้ UI อัปเดตหลอดเลือด
+        OnHealthChanged?.Invoke(healthPercentage);
     }
 
     private void Die()

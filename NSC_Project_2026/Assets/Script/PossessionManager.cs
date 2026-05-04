@@ -13,6 +13,9 @@ public class PossessionManager : MonoBehaviour
     [SerializeField, Tooltip("สคริปต์ควบคุม UI ที่สร้างไว้ (ลากจาก Hierarchy มาใส่)")]
     private PossessionUIController uiController;
 
+    [SerializeField, Tooltip("หลอดเลือด HUD บนหน้าจอ (ลาก HealthBarUI มาใส่)")]
+    private HealthBarUI healthBarUI;
+
     [Header("Smooth Camera Transition")]
     [SerializeField, Tooltip("ระยะเวลาที่กล้องใช้เคลื่อนที่ไปยังร่างใหม่ (วินาที)\nใส่ 0 เพื่อปิดระบบนี้และให้กล้องวาร์ปไปทันที")]
     private float cameraTransitionDuration = 0.6f;
@@ -181,7 +184,17 @@ public class PossessionManager : MonoBehaviour
                 StartCameraTransition(newBody);
             }
 
-            // 6. อัปเดตตัวแปร currentBody เป็นตัวใหม่
+            // 6. สลับหลอดเลือด HUD ไปยังร่างใหม่
+            if (healthBarUI != null)
+            {
+                HealthSystem newHealthSystem = newBody.GetComponent<HealthSystem>();
+                if (newHealthSystem != null)
+                {
+                    healthBarUI.SetTargetHealthSystem(newHealthSystem);
+                }
+            }
+
+            // 7. อัปเดตตัวแปร currentBody เป็นตัวใหม่
             currentBody = newBody;
 
             // ซ่อน UI หลังสิงร่างสำเร็จ
