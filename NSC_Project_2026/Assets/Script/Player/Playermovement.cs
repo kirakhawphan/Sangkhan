@@ -11,6 +11,10 @@ public class Playermovement : MonoBehaviour
     [Tooltip("ล็อกกล้องไม่ให้ HandleCamera ทำงาน (ใช้ตอน PossessionManager กำลังเคลื่อนกล้องแบบ Smooth)")]
     public bool cameraLocked = false;
 
+    // ค่า offset จาก CameraShake (สคริปต์อื่นเขียนค่านี้ได้ Playermovement จะบวกเพิ่มให้ตอนเซ็ตกล้อง)
+    [HideInInspector]
+    public Vector3 cameraShakeOffset;
+
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float runSpeed = 10f;
@@ -183,7 +187,7 @@ public class Playermovement : MonoBehaviour
         // ใช้ Quaternion.Euler สร้าง Rotation ชั่วคราว (Struct ไม่มีผลต่อ GC)
         Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
         
-        cameraTransform.position = targetPosition - (rotation * Vector3.forward * distance);
+        cameraTransform.position = targetPosition - (rotation * Vector3.forward * distance) + cameraShakeOffset;
         cameraTransform.rotation = rotation;
     }
 

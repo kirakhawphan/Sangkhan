@@ -15,6 +15,10 @@ public class HealthSystem : MonoBehaviour, IDamageable
     // อีเวนต์สำหรับแจ้งเตือนเมื่อเป้าหมายตาย
     public event System.Action OnDeath;
 
+    // อีเวนต์เฉพาะตอนโดนดาเมจ — ส่งทั้งจำนวนดาเมจและประเภท
+    // ใช้สำหรับระบบที่ต้องการแยกประเภทดาเมจ เช่น CameraShake, HitFlash, Sound
+    public event System.Action<float, DamageType> OnDamageTaken;
+
     private bool isDead = false;
 
     // Property สาธารณะ เพื่อให้สคริปต์ภายนอก (เช่น HealthBarUI) ดึงค่า % เลือดปัจจุบันได้ทันที
@@ -45,8 +49,11 @@ public class HealthSystem : MonoBehaviour, IDamageable
         // อัปเดตค่า Debug ใน Inspector
         healthPercentage = GetHealthPercentage();
 
-        // ยิงอีเวนต์แจ้งเตือนว่าเลือดเปลี่ยนไปเท่าไหร่แล้ว
+        // ยิงอีเวนต์แจ้งเตือนว่าเลือดเปลี่ยนไปเท่าไหร่แล้ว (สำหรับ UI หลอดเลือด)
         OnHealthChanged?.Invoke(healthPercentage);
+
+        // ยิงอีเวนต์แจ้งรายละเอียดดาเมจ (สำหรับ CameraShake, HitFlash และอื่นๆ)
+        OnDamageTaken?.Invoke(info.damageAmount, info.damageType);
 
         // ตรวจสอบการตาย
         if (currentHealth <= 0f)
