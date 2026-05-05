@@ -11,8 +11,8 @@ AvatarMask:
   m_Elements:
   - m_Path: 
     m_Weight: 1
-  - m_Path: HumanF_BodyMesh
-    m_Weight: 0
+  - m_Path: HumanM_BodyMesh
+    m_Weight: 1
   - m_Path: Rig
     m_Weight: 1
   - m_Path: Rig/B-root
