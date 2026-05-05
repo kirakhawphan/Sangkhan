@@ -42,6 +42,7 @@ public class Playermovement : MonoBehaviour
 
     // --- Caching Components & Variables ---
     private CharacterController controller;
+    private PlayerCombat playerCombat; // แคช PlayerCombat เพื่อเช็ค IsAttacking
     private float turnSmoothVelocity;
     private float currentX = 0f;
     private float currentY = 0f;
@@ -66,6 +67,7 @@ public class Playermovement : MonoBehaviour
     {
         // 1. แคช Components ไว้ใน Awake() ให้จบ
         controller = GetComponent<CharacterController>();
+        playerCombat = GetComponent<PlayerCombat>(); // แคชไว้เพื่อเช็ค IsAttacking ทุกเฟรม
         hasGroundCheck = groundCheck != null;
         
         if (animator == null)
@@ -209,10 +211,13 @@ public class Playermovement : MonoBehaviour
         }
 
         // 2. คำนวณทิศทางการเดิน (รับค่าเฉพาะตอนที่ถูกสิงร่าง)
+        //    ถ้ากำลังโจมตี → บังคับ input เป็น 0 เพื่อล็อกการเดิน (ยังรับแรงโน้มถ่วงปกติ)
         float horizontal = 0f;
         float vertical = 0f;
 
-        if (isPossessed)
+        bool isAttacking = playerCombat != null && playerCombat.IsAttacking;
+
+        if (isPossessed && !isAttacking)
         {
             horizontal = Input.GetAxisRaw("Horizontal");
             vertical = Input.GetAxisRaw("Vertical");
@@ -255,8 +260,8 @@ public class Playermovement : MonoBehaviour
             animator.SetBool(isGroundedHash, isGrounded);
         }
 
-        // 3. ระบบกระโดด (รับค่าเฉพาะตอนถูกสิง)
-        if (isPossessed && Input.GetButtonDown("Jump") && isGrounded)
+        // 3. ระบบกระโดด (รับค่าเฉพาะตอนถูกสิง + ห้ามกระโดดขณะโจมตี)
+        if (isPossessed && !isAttacking && Input.GetButtonDown("Jump") && isGrounded)
         {
             // ดึงค่าที่คำนวณไว้ล่วงหน้ามาใช้ทันที ไม่ต้องรันสูตร Mathf.Sqrt ซ้ำ
             velocity.y = calculatedJumpVelocity;
