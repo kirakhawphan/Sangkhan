@@ -20,8 +20,29 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private Transform cameraTransform;
 
     [Header("Attack Settings")]
-    [Tooltip("คูลดาวน์ระหว่างการโจมตีแต่ละครั้ง")]
+    [Tooltip("คูลดาวน์ระหว่างการโจมตีแต่ละครั้ง (กันกดรัวในแต่ละหมัด และระยะเวลาล็อกการเดิน)")]
     [SerializeField] private Cooldown attackCooldown = new Cooldown { duration = 0.5f };
+
+    [Tooltip("คูลดาวน์ใหญ่หลังจากจบคอมโบ (ฟันครบทุกท่า) ถึงจะเริ่มโจมตีชุดใหม่ได้")]
+    [SerializeField] private Cooldown comboFinishCooldown = new Cooldown { duration = 1.5f };
+
+    [Tooltip("จำนวนคอมโบสูงสุดที่สามารถกดได้ (ปรับได้ตามจำนวนแอนิเมชันที่มี)")]
+    [SerializeField] private int maxCombo = 3;
+
+    [Tooltip("เวลาที่จะจดจำการกดปุ่มล่วงหน้า (วินาที) ช่วยให้กดคอมโบต่อได้ลื่นไหลขึ้นแม้แอนิเมชันเก่ายังไม่จบ")]
+    [SerializeField] private float inputBufferTime = 0.2f;
+
+    [Tooltip("เวลาที่จะรีเซ็ตคอมโบกลับไป 0 ถ้าผู้เล่นไม่กดโจมตีต่อ")]
+    [SerializeField] private float comboResetTime = 1.0f;
+
+    // สถานะคอมโบ (0 = ไม่ได้ตี, 1 = หมัด1, 2 = หมัด2, ...)
+    private int comboStep = 0;
+    
+    // ตัวจับเวลารีเซ็ตคอมโบ
+    private float comboTimer = 0f;
+
+    // ตัวจับเวลาสำหรับ Input Buffer
+    private float currentBufferTimer = 0f;
 
     [Header("Attack Lunge (โน้มตัวพุ่งไปข้างหน้า)")]
     [Tooltip("ระยะทางที่ตัวละครจะพุ่งไปข้างหน้าเมื่อโจมตี (หน่วย: เมตร)")]
@@ -36,7 +57,7 @@ public class PlayerCombat : MonoBehaviour
     // ───────────────────────────── Animator Parameter Hash ──────────────────────
     // Strict Rule: แปลงชื่อ Parameter เป็น Hash ล่วงหน้า
     // เพื่อหลีกเลี่ยงการสร้าง String ใหม่ทุกเฟรม (ลด GC Allocation)
-    private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private static readonly int ComboStepHash = Animator.StringToHash("ComboStep");
 
     // ───────────────────────────── Cached Components ────────────────────────────
     private CharacterController controller;
@@ -74,8 +95,51 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
+        HandleComboReset();
         HandleAttackInput();
+        ProcessInputBuffer();
         ProcessLunge();
+    }
+
+    /// <summary>
+    /// ตัวจับเวลาสำหรับรีเซ็ตคอมโบกลับเป็น 0 เมื่อไม่ได้โจมตีต่อเนื่อง หรือจบคอมโบแล้ว
+    /// </summary>
+    private void HandleComboReset()
+    {
+        // ทำงานเฉพาะตอนที่อยู่ในคอมโบ (comboStep > 0)
+        if (comboStep > 0)
+        {
+            // ถ้าฟันครบจนถึงท่าสุดท้ายแล้ว ให้ใช้คูลดาวน์ใหญ่ (comboFinishCooldown) เป็นตัวรีเซ็ตกลับ 0
+            if (comboStep >= maxCombo)
+            {
+                if (comboFinishCooldown.IsReady())
+                {
+                    ResetCombo();
+                }
+            }
+            else
+            {
+                // ถ้ายังฟันไม่จบชุด (อยู่ท่า 1 หรือ 2) ให้ใช้เวลา comboResetTime ปกติ
+                comboTimer += Time.deltaTime;
+                
+                // ถ้าหมดเวลาให้กดต่อ (หลุดคอมโบ) -> ลงโทษคูลดาวน์ใหญ่!
+                if (comboTimer >= comboResetTime)
+                {
+                    comboFinishCooldown.StartCooldown();
+                    ResetCombo();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// รีเซ็ตสถานะคอมโบกลับไปที่ 0 (Idle)
+    /// </summary>
+    private void ResetCombo()
+    {
+        comboStep = 0;
+        comboTimer = 0f;
+        animator.SetInteger(ComboStepHash, comboStep);
     }
 
     // ════════════════════════════════════════════════════════════════════════════
@@ -95,23 +159,63 @@ public class PlayerCombat : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// ตรวจจับ Input คลิกเมาส์ซ้าย → เล่นแอนิเมชัน + พุ่ง
-    /// เงื่อนไข: ต้องรอให้ Cooldown หมดก่อนถึงจะโจมตีครั้งถัดไปได้
+    /// ตรวจจับ Input คลิกเมาส์ซ้าย และเก็บคำสั่งลงกระเป๋า (Input Buffer)
     /// </summary>
     private void HandleAttackInput()
     {
-        // เช็คว่าผู้เล่นกดคลิกเมาส์ซ้าย (Button 0)
-        if (!Input.GetMouseButtonDown(0)) return;
+        // เมื่อมีการกดปุ่มโจมตี ให้เซ็ตเวลา Buffer ทันทีเพื่อจำคำสั่งล่วงหน้า
+        if (Input.GetMouseButtonDown(0))
+        {
+            currentBufferTimer = inputBufferTime;
+        }
+    }
 
-        // เช็คว่า Cooldown พร้อมหรือยัง → ถ้ายังไม่หมดเวลา = ไม่ให้โจมตี (กันสแปมคลิก)
+    /// <summary>
+    /// ประมวลผลคำสั่งใน Buffer ว่าถึงเวลาและเข้าเงื่อนไขที่จะทำการโจมตีได้หรือยัง
+    /// </summary>
+    private void ProcessInputBuffer()
+    {
+        // ลดเวลาของ Buffer ลงเรื่อยๆ ตามเวลาจริง
+        if (currentBufferTimer > 0)
+        {
+            currentBufferTimer -= Time.deltaTime;
+        }
+
+        // 🛑 ถ้าไม่มีคำสั่งค้างอยู่ในกระเป๋า Buffer ก็เตะออกไปเลยไม่ต้องทำต่อ
+        if (currentBufferTimer <= 0) return;
+
+        // 🛑 เช็คว่าเท้าติดพื้นหรือไม่ (ห้ามโจมตีกลางอากาศ)
+        if (!controller.isGrounded) return;
+
+        // ⛔ เช็คว่าติดคูลดาวน์ใหญ่หรือไม่? (เกิดจากจบคอมโบ หรือ หลุดคอมโบ) 
+        if (!comboFinishCooldown.IsReady()) return;
+
+        // ⏱️ เช็คว่า Cooldown การฟันของหมัดที่แล้วเสร็จหรือยัง?
         if (!attackCooldown.IsReady()) return;
 
-        // ═══ ผ่านเงื่อนไขทั้งหมด → ทำการโจมตี ═══
+        // ═══ 🟢 ผ่านเงื่อนไขทั้งหมด และมีคำสั่งรออยู่ ➡️ ทำการโจมตี ═══
 
-        // สั่ง Animator เล่นแอนิเมชัน Attack ผ่าน Trigger
-        animator.SetTrigger(AttackHash);
+        // ล้างคำสั่งใน Buffer ทันทีที่ถูกดึงไปใช้ เพื่อป้องกันการดึงไปโจมตีซ้ำซ้อน
+        currentBufferTimer = 0f;
 
-        // เริ่มนับ Cooldown ใหม่ทันที เพื่อป้องกันการกดซ้ำก่อนเวลา
+        // เพิ่มขั้นคอมโบ (จาก 0 -> 1, 1 -> 2, ไปจนถึง maxCombo)
+        comboStep++;
+
+        // สั่ง Animator เปลี่ยนท่าตามขั้นคอมโบ
+        animator.SetInteger(ComboStepHash, comboStep);
+
+        if (comboStep >= maxCombo)
+        {
+            // ถ้าฟันมาถึงท่าสุดท้ายแล้ว ให้เริ่มคูลดาวน์จบคอมโบ (ชุดใหญ่)
+            comboFinishCooldown.StartCooldown();
+        }
+        else
+        {
+            // ถ้ายืนอยู่ท่ากลางๆ ให้รีเซ็ตตัวจับเวลาคอมโบใหม่
+            comboTimer = 0f;
+        }
+
+        // เริ่มนับ Cooldown ของการฟันแต่ละหมัดใหม่ทันที เพื่อป้องกันสแปมและล็อกการเดิน
         attackCooldown.StartCooldown();
 
         // เริ่มระบบพุ่งไปข้างหน้า
