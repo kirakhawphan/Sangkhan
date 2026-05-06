@@ -1879,57 +1879,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!1 &1342387627
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1342387628}
-  - component: {fileID: 1342387629}
-  m_Layer: 0
-  m_Name: HitboxCenter
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1342387628
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1342387627}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2073900282}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1342387629
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1342387627}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 88920c039867bdf4ca63ef1b4564707e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MeleeHitbox
-  attackPoint: {fileID: 1652676608}
-  attackRadius: 0.2
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 512
-  attackDamage: 20
-  knockbackPower: 5
 --- !u!1 &1370343534
 GameObject:
   m_ObjectHideFlags: 0
@@ -2485,11 +2434,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1596409433}
   m_CullTransparentMesh: 1
---- !u!4 &1652676608 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 981633286492894742, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-  m_PrefabInstance: {fileID: 5570012301528945479}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1809364619
 GameObject:
   m_ObjectHideFlags: 0
@@ -2876,19 +2820,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 558cfbd5ff9670a4b8d5166e155e2b01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
-  weaponHitbox: {fileID: 1342387629}
   animator: {fileID: 2073900289}
-  controller: {fileID: 2073900292}
-  maxComboStep: 3
+  cameraTransform: {fileID: 0}
+  attackCooldown:
+    duration: 0.5
+  comboFinishCooldown:
+    duration: 1.5
+  maxCombo: 2
   inputBufferTime: 0.2
-  attackCooldown: 0.3
   comboResetTime: 0.7
-  comboFinishCooldown: 1.5
---- !u!143 &2073900292 stripped
-CharacterController:
-  m_CorrespondingSourceObject: {fileID: 5605646302524281039, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-  m_PrefabInstance: {fileID: 5570012301528945479}
-  m_PrefabAsset: {fileID: 0}
+  lungeDistance: 4
+  lungeDuration: 0.2
+  lungeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1001 &5570012301528945479
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2920,18 +2886,6 @@ PrefabInstance:
     - target: {fileID: 663308038361338840, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981633286492894742, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: -2.1261644
-      objectReference: {fileID: 0}
-    - target: {fileID: 981633286492894742, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: -0.000108076856
-      objectReference: {fileID: 0}
-    - target: {fileID: 981633286492894742, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: -85.09473
       objectReference: {fileID: 0}
     - target: {fileID: 1313355488411809727, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
@@ -2985,18 +2939,6 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3524050236677815468, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 3.4209878
-      objectReference: {fileID: 0}
-    - target: {fileID: 3524050236677815468, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 5.5914845
-      objectReference: {fileID: 0}
-    - target: {fileID: 3524050236677815468, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0.000000013364077
-      objectReference: {fileID: 0}
     - target: {fileID: 3701165833375674471, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
       value: 0
@@ -3048,18 +2990,6 @@ PrefabInstance:
     - target: {fileID: 5324861322669936022, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5521720757917067960, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: -2.1261187
-      objectReference: {fileID: 0}
-    - target: {fileID: 5521720757917067960, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0.0009831577
-      objectReference: {fileID: 0}
-    - target: {fileID: 5521720757917067960, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 85.09472
       objectReference: {fileID: 0}
     - target: {fileID: 5577865997325088112, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
@@ -3287,9 +3217,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 189373286}
-    - targetCorrespondingSourceObject: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1342387628}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 7251126261850163335, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       insertIndex: -1
