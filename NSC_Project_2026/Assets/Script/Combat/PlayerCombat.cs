@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerCombat : MonoBehaviour
 {
     [Header("Combat References")]
-    [SerializeField] private MeleeHitbox weaponHitbox;
+    [SerializeField] private MeleeHitbox[] weaponHitboxes;
     [SerializeField] private Animator animator;
     [SerializeField] private CharacterController controller; // ใช้สำหรับ Grounded Check (ปรับเปลี่ยนได้ตาม PlayerMovement ของคุณ)
 
@@ -25,10 +25,10 @@ public class PlayerCombat : MonoBehaviour
     // สถานะคอมโบปัจจุบัน
     private int currentComboStep;
 
-    // เปิดให้สคริปต์อื่น (เช่น Playermovement) เช็คสถานะการโจมตีได้
+    // เปิดให้สคริปต์อื่น (เช่น Playermovement) เช็คสถานะการโจมตีได้ (ล็อกการเดินเฉพาะตอนกำลังเหวี่ยงอาวุธ)
     public bool IsAttacking
     {
-        get { return currentAttackCooldownTimer > 0f || currentComboFinishCooldownTimer > 0f; }
+        get { return currentAttackCooldownTimer > 0f; }
     }
 
     // Zero GC: สร้าง Hash รอไว้ใช้งานแทนการส่งค่าเป็น String ตรงๆ
@@ -143,7 +143,14 @@ public class PlayerCombat : MonoBehaviour
     /// </summary>
     public void AE_TriggerWeaponAttack()
     {
-        if (weaponHitbox != null) weaponHitbox.PerformAttack();
+        // Guard Clause: ถ้าไม่ได้ใส่ Hitbox ไว้เลย ให้ข้ามไป
+        if (weaponHitboxes == null || weaponHitboxes.Length == 0) return;
+
+        // วนลูปสั่งโจมตีทุก Hitbox ที่มีอยู่ใน Array (Zero GC ด้วย for loop)
+        for (int i = 0; i < weaponHitboxes.Length; i++)
+        {
+            if (weaponHitboxes[i] != null) weaponHitboxes[i].PerformAttack();
+        }
     }
 
     /// <summary>

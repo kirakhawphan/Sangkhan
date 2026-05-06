@@ -183,6 +183,11 @@ MonoBehaviour:
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: 6be3d2106e7526441b1df5bcd58bf0c9, type: 2}
   m_BuildHeightMesh: 0
+--- !u!4 &9383112 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5322801364551704115, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+  m_PrefabInstance: {fileID: 5570012301528945479}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &189373285
 GameObject:
   m_ObjectHideFlags: 0
@@ -1188,6 +1193,57 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7251126261850163335, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
   m_PrefabInstance: {fileID: 5570012301528945479}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &801186340
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 801186342}
+  - component: {fileID: 801186341}
+  m_Layer: 0
+  m_Name: HitboxCenterK
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &801186341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 801186340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88920c039867bdf4ca63ef1b4564707e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeHitbox
+  attackPoint: {fileID: 9383112}
+  attackRadius: 0.2
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  attackDamage: 20
+  knockbackPower: 5
+--- !u!4 &801186342
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 801186340}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2073900282}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1890,7 +1946,7 @@ GameObject:
   - component: {fileID: 1342387628}
   - component: {fileID: 1342387629}
   m_Layer: 0
-  m_Name: HitboxCenter
+  m_Name: HitboxCenterP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2876,7 +2932,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 558cfbd5ff9670a4b8d5166e155e2b01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
-  weaponHitbox: {fileID: 1342387629}
+  weaponHitboxes:
+  - {fileID: 1342387629}
+  - {fileID: 801186341}
   animator: {fileID: 2073900289}
   controller: {fileID: 2073900292}
   maxComboStep: 3
@@ -2923,15 +2981,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 981633286492894742, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -2.1261644
+      value: -2.1262033
       objectReference: {fileID: 0}
     - target: {fileID: 981633286492894742, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -0.000108076856
+      value: 0.000014844536
       objectReference: {fileID: 0}
     - target: {fileID: 981633286492894742, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -85.09473
+      value: -85.09472
       objectReference: {fileID: 0}
     - target: {fileID: 1313355488411809727, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
@@ -2987,7 +3045,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3524050236677815468, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 3.4209878
+      value: 0.90152866
       objectReference: {fileID: 0}
     - target: {fileID: 3524050236677815468, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -2995,7 +3053,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3524050236677815468, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0.000000013364077
+      value: -0.000000006670932
       objectReference: {fileID: 0}
     - target: {fileID: 3701165833375674471, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
@@ -3051,15 +3109,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5521720757917067960, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -2.1261187
+      value: -2.1261888
       objectReference: {fileID: 0}
     - target: {fileID: 5521720757917067960, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0.0009831577
+      value: 0.00026944434
       objectReference: {fileID: 0}
     - target: {fileID: 5521720757917067960, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 85.09472
+      value: 85.09476
       objectReference: {fileID: 0}
     - target: {fileID: 5577865997325088112, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
@@ -3290,6 +3348,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1342387628}
+    - targetCorrespondingSourceObject: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 801186342}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 7251126261850163335, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       insertIndex: -1
