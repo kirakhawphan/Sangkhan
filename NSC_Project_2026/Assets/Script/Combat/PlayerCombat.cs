@@ -15,12 +15,26 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private float attackCooldown = 0.3f; // Tier 1: เวลาหน่วงระหว่างการโจมตีแต่ละครั้ง (กันกดรัวเกินไป)
     [SerializeField] private float comboResetTime = 1.0f; // Tier 2: เวลาที่ให้ผู้เล่นตัดสินใจกดตีต่อ (Combo Window)
     [SerializeField] private float comboFinishCooldown = 1.5f; // Tier 3: เวลาหน่วงหลังจากจบคอมโบ (หรือโดนทำโทษจาก Combo Penalty)
+    
+    [Header("Movement Locks")]
+    [SerializeField] private float normalAttackLockTime = 0.3f; // ระยะเวลาล็อกการเดินท่าปกติ
+    [SerializeField] private float finishAttackLockTime = 0.6f; // ระยะเวลาล็อกการเดินเฉพาะท่าจบคอมโบ
+
+    [Header("Attack Dash")]
+    [SerializeField] private AnimationCurve dashCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f)); // กราฟปรับความเร็ว
+    [SerializeField] private float dashDistance = 2f; // ระยะทางรวมที่ต้องการให้พุ่ง
+    [SerializeField] private float dashDuration = 0.2f; // ระยะเวลาที่ใช้ในการพุ่ง
 
     // ตัวแปรจับเวลาต่างๆ
     private float currentBufferTimer;
     private float currentAttackCooldownTimer;
+    private float currentMovementLockTimer; // แยกการล็อกเดินออกมาเพื่อ Separation of Concerns
     private float comboTimer;
     private float currentComboFinishCooldownTimer;
+
+    // ตัวแปรสำหรับ Dash แบบ Absolute Zero GC
+    private bool isDashing;
+    private float currentDashTime;
 
     // สถานะคอมโบปัจจุบัน
     private int currentComboStep;
@@ -28,7 +42,7 @@ public class PlayerCombat : MonoBehaviour
     // เปิดให้สคริปต์อื่น (เช่น Playermovement) เช็คสถานะการโจมตีได้ (ล็อกการเดินเฉพาะตอนกำลังเหวี่ยงอาวุธ)
     public bool IsAttacking
     {
-        get { return currentAttackCooldownTimer > 0f; }
+        get { return currentMovementLockTimer > 0f; } // เช็คจาก Movement Lock Timer แทน
     }
 
     // Zero GC: สร้าง Hash รอไว้ใช้งานแทนการส่งค่าเป็น String ตรงๆ
@@ -38,6 +52,7 @@ public class PlayerCombat : MonoBehaviour
     private void Update()
     {
         UpdateTimers();
+        HandleDash(); // ย้ายลอจิกพุ่งมาไว้ใน Update เพื่อความเป็น Absolute Zero GC
         HandleInput();
         ProcessInputBuffer();
         CheckComboTimeout();
@@ -50,8 +65,39 @@ public class PlayerCombat : MonoBehaviour
     {
         if (currentBufferTimer > 0f) currentBufferTimer -= Time.deltaTime;
         if (currentAttackCooldownTimer > 0f) currentAttackCooldownTimer -= Time.deltaTime;
+        if (currentMovementLockTimer > 0f) currentMovementLockTimer -= Time.deltaTime;
         if (comboTimer > 0f) comboTimer -= Time.deltaTime;
         if (currentComboFinishCooldownTimer > 0f) currentComboFinishCooldownTimer -= Time.deltaTime;
+    }
+
+    /// <summary>
+    /// ประมวลผลการพุ่งตัวตอนโจมตีแบบ Absolute Zero GC
+    /// </summary>
+    private void HandleDash()
+    {
+        if (!isDashing) return;
+
+        currentDashTime += Time.deltaTime;
+
+        if (currentDashTime >= dashDuration)
+        {
+            isDashing = false; // จบการพุ่ง
+            return;
+        }
+
+        // คำนวณเวลาแบบ Normalized (0 ถึง 1)
+        float normalizedTime = currentDashTime / dashDuration;
+
+        // หาค่าความแรง ณ เวลานั้นจาก Curve
+        float force = dashCurve.Evaluate(normalizedTime);
+        
+        // คำนวณระยะการเคลื่อนที่ในเฟรมนี้
+        Vector3 dashMovement = transform.forward * ((dashDistance / dashDuration) * force * Time.deltaTime);
+
+        if (controller != null)
+        {
+            controller.Move(dashMovement);
+        }
     }
 
     /// <summary>
@@ -95,6 +141,17 @@ public class PlayerCombat : MonoBehaviour
         // ล้างค่า Buffer เป็น 0 ทันทีที่ถูกนำมาใช้งาน
         currentBufferTimer = 0f;
 
+        // Safeguard: หากตีจบคอมโบที่แล้วไปแล้ว ให้รีเซ็ตกลับเป็น 0 เพื่อเริ่มฮิตที่ 1 ใหม่
+        // (ป้องกันบัคกดรัวในเฟรมหมดคูลดาวน์พอดี แล้วค่า Step ทะลุเกิน Max ทำให้ไม่มีอนิเมชั่น)
+        if (currentComboStep >= maxComboStep)
+        {
+            currentComboStep = 0;
+        }
+
+        // Absolute Zero GC Dash: เริ่มต้นการพุ่งใหม่
+        isDashing = true;
+        currentDashTime = 0f;
+
         // บวกค่าคอมโบไปอีก 1 ขั้น
         currentComboStep++;
 
@@ -106,16 +163,20 @@ public class PlayerCombat : MonoBehaviour
         if (currentComboStep >= maxComboStep)
         {
             // หากตีจนครบ Max Combo แล้ว
-            currentComboStep = 0; // รีเซ็ตสถานะกลับเป็น 0
-            animator.SetInteger(hashComboStep, 0);
-
+            // ไม่รีเซ็ต currentComboStep เป็น 0 ทันที เพื่อให้ Animator มีเวลาเปลี่ยน State
             currentComboFinishCooldownTimer = comboFinishCooldown; // ติดคูลดาวน์ใหญ่ (Tier 3)
-            comboTimer = 0f; // เคลียร์เวลา Combo Reset ทิ้ง
+            
+            // ล็อกการเดินของท่าจบ
+            currentMovementLockTimer = finishAttackLockTime; 
+            
+            // รอให้กลับเป็น 0 อย่างเป็นธรรมชาติผ่าน CheckComboTimeout
+            comboTimer = comboFinishCooldown; 
         }
         else
         {
             // หากยังไม่จบคอมโบ (ไปต่อได้)
             currentAttackCooldownTimer = attackCooldown; // เซ็ตคูลดาวน์ระหว่างฮิต (Tier 1)
+            currentMovementLockTimer = normalAttackLockTime; // ล็อกการเดินท่าปกติ
             comboTimer = comboResetTime; // ให้เวลาสำหรับกดตีจังหวะต่อไป (Tier 2)
         }
     }
@@ -131,11 +192,19 @@ public class PlayerCombat : MonoBehaviour
         // Guard Clause 2: หากเวลายังไม่หมด (ผู้เล่นยังกดตีต่อได้อยู่) ไม่ต้องเช็ค
         if (comboTimer > 0f) return;
 
+        // เช็คว่าเป็นการจบคอมโบแบบสมบูรณ์หรือไม่ (ถึง Max แล้ว)
+        bool isMaxComboFinish = (currentComboStep >= maxComboStep);
+
         // เมื่อปล่อยให้เวลาขาดตอน (หมดเวลา comboTimer)
-        // ทำการรีเซ็ตคอมโบเป็น 0 และติดคูลดาวน์ทำโทษ (Combo Penalty)
+        // ทำการรีเซ็ตคอมโบเป็น 0
         currentComboStep = 0;
         animator.SetInteger(hashComboStep, 0);
-        currentComboFinishCooldownTimer = comboFinishCooldown; // ติดคูลดาวน์ใหญ่ (Tier 3)
+
+        // ถ้าไม่ใช่การตีครบ Max Combo แล้วปล่อยเวลาหมด (คือตีพลาด/ขาดตอน) ให้ติดคูลดาวน์ทำโทษ
+        if (!isMaxComboFinish)
+        {
+            currentComboFinishCooldownTimer = comboFinishCooldown; // ติดคูลดาวน์ใหญ่ (Tier 3)
+        }
     }
 
     /// <summary>
