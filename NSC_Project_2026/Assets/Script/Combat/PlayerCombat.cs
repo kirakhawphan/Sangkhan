@@ -25,6 +25,10 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private float dashDistance = 2f; // ระยะทางรวมที่ต้องการให้พุ่ง
     [SerializeField] private float dashDuration = 0.2f; // ระยะเวลาที่ใช้ในการพุ่ง
 
+    [Header("Combat Targeting (Soft Lock-on)")]
+    [SerializeField] private TargetDetector targetDetector;
+    [SerializeField] private Transform aimOrigin; // จุดกำเนิดในการเล็งเป้า (เช่น Main Camera หรือ ตัวละคร)
+
     // ตัวแปรจับเวลาต่างๆ
     private float currentBufferTimer;
     private float currentAttackCooldownTimer;
@@ -52,10 +56,23 @@ public class PlayerCombat : MonoBehaviour
     private void Update()
     {
         UpdateTimers();
+        UpdateCombatTargeting(); // อัปเดตการหาเป้าหมาย
         HandleDash(); // ย้ายลอจิกพุ่งมาไว้ใน Update เพื่อความเป็น Absolute Zero GC
         HandleInput();
         ProcessInputBuffer();
         CheckComboTimeout();
+    }
+
+    /// <summary>
+    /// อัปเดตระบบค้นหาเป้าหมายในการต่อสู้
+    /// </summary>
+    private void UpdateCombatTargeting()
+    {
+        if (targetDetector != null && aimOrigin != null)
+        {
+            // ส่ง transform เป็น excludeRoot เพื่อไม่ให้ล็อกเป้าตัวเอง
+            targetDetector.UpdateDetection(aimOrigin, aimOrigin.forward, transform);
+        }
     }
 
     /// <summary>
@@ -152,6 +169,9 @@ public class PlayerCombat : MonoBehaviour
         isDashing = true;
         currentDashTime = 0f;
 
+        // หันหน้าและทิศทางไปหา Target ทันทีเมื่อโจมตี
+        RotateTowardsTarget();
+
         // บวกค่าคอมโบไปอีก 1 ขั้น
         currentComboStep++;
 
@@ -178,6 +198,24 @@ public class PlayerCombat : MonoBehaviour
             currentAttackCooldownTimer = attackCooldown; // เซ็ตคูลดาวน์ระหว่างฮิต (Tier 1)
             currentMovementLockTimer = normalAttackLockTime; // ล็อกการเดินท่าปกติ
             comboTimer = comboResetTime; // ให้เวลาสำหรับกดตีจังหวะต่อไป (Tier 2)
+        }
+    }
+
+    /// <summary>
+    /// ฟังก์ชันสำหรับหันหน้าหาเป้าหมายทันทีแบบ Zero GC
+    /// </summary>
+    private void RotateTowardsTarget()
+    {
+        // Guard Clause: ถ้าไม่ได้เปิดระบบหรือไม่มี Target ให้ข้ามไป
+        if (targetDetector == null || targetDetector.CurrentTarget == null) return;
+
+        Vector3 directionToTarget = targetDetector.CurrentTarget.transform.position - transform.position;
+        directionToTarget.y = 0f; // ล็อกแกน Y ไว้เพื่อไม่ให้ตัวละครก้มหรือเงย
+
+        // ถ้าเป้าหมายไม่ได้อยู่จุดเดียวกับตัวละคร (ป้องกัน Error จาก LookRotation)
+        if (directionToTarget.sqrMagnitude > 0.001f)
+        {
+            transform.rotation = Quaternion.LookRotation(directionToTarget);
         }
     }
 

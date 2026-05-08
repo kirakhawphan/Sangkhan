@@ -3153,15 +3153,6 @@ MonoBehaviour:
     m_RotationOrder: 4
   dashDistance: 2
   dashDuration: 0.2
-  targetDetector:
-    detectionMode: 0
-    maxDetectionDistance: 15
-    aimRadius: 1.5
-    targetLayer:
-      serializedVersion: 2
-      m_Bits: 512
-    scanInterval: 0.2
-  aimOrigin: {fileID: 330585546}
 --- !u!143 &2073900292 stripped
 CharacterController:
   m_CorrespondingSourceObject: {fileID: 5605646302524281039, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
