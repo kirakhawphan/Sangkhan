@@ -32,6 +32,8 @@ public class EnemyMovement : MonoBehaviour
 
     // แคชพารามิเตอร์ Animator เป็น Hash (int) แทนการใช้ String (Zero String Allocation)
     private readonly int speedHash = Animator.StringToHash("Speed");
+    private readonly int isWalkingHash = Animator.StringToHash("isWalking");
+    private readonly int isGroundedHash = Animator.StringToHash("IsGrounded");
 
     private void Awake()
     {
@@ -75,12 +77,16 @@ public class EnemyMovement : MonoBehaviour
         // ==========================================
         if (animator != null && animator.runtimeAnimatorController != null)
         {
-            // ดึงความเร็วแนวนอนจาก agent.velocity (ตัดแกน Y ทิ้ง ป้องกันบั๊กแอนิเมชันเดินเวลากระโดด/ตกจากที่สูง)
+            // ดึงความเร็วแนวนอนจาก agent.velocity
             Vector3 horizontalVelocity = new Vector3(agent.velocity.x, 0f, agent.velocity.z);
             float currentSpeed = horizontalVelocity.magnitude;
 
-            // อัปเดตพารามิเตอร์ Speed ให้ Animator (ใช้ damp time 0.1f ให้เปลี่ยนผ่านสมูท)
+            // อัปเดตพารามิเตอร์ Speed ให้ Animator
             animator.SetFloat(speedHash, currentSpeed, 0.1f, Time.deltaTime);
+            
+            // [เพิ่ม] อัปเดตสถานะการเดินและการติดพื้น
+            animator.SetBool(isWalkingHash, currentSpeed > 0.1f);
+            animator.SetBool(isGroundedHash, true); // AI ถือว่าติดพื้นเสมอ
         }
     }
 

@@ -34,6 +34,18 @@ public class ChaseState : IEnemyState
 
         // 3. สั่งกล้ามเนื้อให้วิ่งไปที่พิกัดนั้น (ถ้ามี)
         if (brain.movement != null) brain.movement.MoveTo(targetPosition);
+
+        // 4. [เพิ่ม] เช็คระยะโจมตี: ถ้าเข้าใกล้พอ และคูลดาวน์เสร็จแล้ว ให้เปลี่ยนไปตีทันที
+        if (brain.combat != null && brain.combat.CanAttack())
+        {
+            float distance = Vector3.Distance(brain.transform.position, targetPosition);
+            float range = brain.combat.GetAttackRange();
+
+            if (distance <= range)
+            {
+                brain.ChangeState(new AttackState(brain));
+            }
+        }
     }
 
     public void Exit()

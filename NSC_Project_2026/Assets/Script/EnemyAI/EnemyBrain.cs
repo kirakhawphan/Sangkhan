@@ -13,6 +13,9 @@ public class EnemyBrain : MonoBehaviour
     [Tooltip("ระบบสายตา (ค้นหาเป้าหมาย)")]
     public TargetDetector targetDetector;
 
+    [Tooltip("ระบบต่อสู้ (สั่งโจมตี)")]
+    public EnemyCombat combat;
+
     [Tooltip("ระบบเลือดและความถึก")]
     public HealthSystem health;
 
