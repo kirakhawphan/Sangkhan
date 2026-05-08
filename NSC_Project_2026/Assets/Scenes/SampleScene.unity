@@ -1228,7 +1228,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   attackDamage: 20
-  knockbackPower: 5
+  poiseDamage: 20
+  knockbackPower: 10
 --- !u!4 &801186342
 Transform:
   m_ObjectHideFlags: 0
@@ -1710,6 +1711,64 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1053334540 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1903325291844539813, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+  m_PrefabInstance: {fileID: 1995775427}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1053334541 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 755064285522997231, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+  m_PrefabInstance: {fileID: 1995775427}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1053334540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd146a40b66ce7542988e92a2f37975d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
+--- !u!95 &1053334545 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5170699981537187173, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+  m_PrefabInstance: {fileID: 1995775427}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1053334547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1053334540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ccac5ce064798b4bb1009d94349c646, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyBrain
+  movement: {fileID: 0}
+  targetDetector:
+    detectionMode: 1
+    maxDetectionDistance: 15
+    aimRadius: 1.5
+    targetLayer:
+      serializedVersion: 2
+      m_Bits: 0
+    scanInterval: 0.2
+  health: {fileID: 1053334541}
+  animator: {fileID: 1053334545}
+  stunDuration: 0.8
+--- !u!114 &1053334548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1053334540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55fafba145e0ef546a97e696fa80e748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleKnockback
+  health: {fileID: 1053334541}
 --- !u!1 &1090824935
 GameObject:
   m_ObjectHideFlags: 0
@@ -1985,7 +2044,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   attackDamage: 20
-  knockbackPower: 5
+  poiseDamage: 20
+  knockbackPower: 10
 --- !u!1 &1370343534
 GameObject:
   m_ObjectHideFlags: 0
@@ -2877,7 +2937,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1903325291844539813, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1053334547}
+    - targetCorrespondingSourceObject: {fileID: 1903325291844539813, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1053334548}
   m_SourcePrefab: {fileID: 100100000, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
 --- !u!4 &2006249169 stripped
 Transform:
@@ -2913,8 +2979,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
   maxHealth: 100
+  maxPoise: 20
   currentHealth: 0
   healthPercentage: 0
+  currentPoise: 0
 --- !u!95 &2073900289 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 4110326939117963335, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}

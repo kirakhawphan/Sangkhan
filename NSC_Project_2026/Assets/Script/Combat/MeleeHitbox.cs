@@ -10,6 +10,7 @@ public class MeleeHitbox : MonoBehaviour
 
     [Header("Damage Settings")]
     [SerializeField] private float attackDamage = 20f;   // ดาเมจพื้นฐาน
+    [SerializeField] private float poiseDamage = 10f;    // ดาเมจทำลายเกราะ (ความถึก)
     [SerializeField] private float knockbackPower = 5f;  // ความแรงของการกระเด็น
 
     // Strict Rule: จอง Array ล่วงหน้า เพื่อป้องกัน GC Allocation ที่เกิดจากการสร้าง Array ใหม่ทุกครั้งที่โจมตี
@@ -35,13 +36,16 @@ public class MeleeHitbox : MonoBehaviour
 
             if (damageable != null)
             {
-                // คำนวณทิศทางการกระเด็น (ชี้จากจุดโจมตีไปหาเป้าหมาย)
-                Vector3 knockbackDir = (col.transform.position - transform.position).normalized;
+                // [แก้] คำนวณทิศทางการกระเด็น และบังคับให้อยู่ในแนวนอน (y = 0) ป้องกันแรงกดลงพื้น
+                Vector3 knockbackDir = col.transform.position - transform.position;
+                knockbackDir.y = 0;
+                knockbackDir = knockbackDir.normalized;
                 
                 // สร้าง DamageInfo ในรูปแบบของ Struct (ไม่มีการ Alloc Memory บน Heap = Zero GC)
                 DamageInfo info = new DamageInfo
                 {
                     damageAmount = attackDamage,
+                    poiseDamage = poiseDamage,
                     hitPoint = col.ClosestPoint(attackPoint.position), // หาจุดที่ใกล้ที่สุดบน Collider เพื่อเล่นเอฟเฟกต์
                     knockbackForce = knockbackDir * knockbackPower,
                     attacker = this.gameObject

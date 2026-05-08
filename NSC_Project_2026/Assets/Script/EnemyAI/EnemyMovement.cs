@@ -20,6 +20,9 @@ public class EnemyMovement : MonoBehaviour
     // --- Cached Components (Optimization) ---
     private NavMeshAgent agent;
 
+    // [เพิ่ม] เก็บแรงกระเด็นที่ยังค้างอยู่ เพื่อใช้ใน Update
+    private Vector3 knockbackVelocity;
+
     // แคชพารามิเตอร์ Animator เป็น Hash (int) แทนการใช้ String (Zero String Allocation)
     private readonly int speedHash = Animator.StringToHash("Speed");
 
@@ -39,6 +42,19 @@ public class EnemyMovement : MonoBehaviour
     {
         // ถ้าถูกผู้เล่นสิงร่าง (NavMeshAgent ถูกปิด) ให้หยุดซิงค์แอนิเมชัน เพื่อไม่ให้ไปแย่งทำงานกับสคริปต์ Playermovement
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
+        // ==========================================
+        // [เพิ่ม] Knockback: เลื่อนตัวละครทุกเฟรมด้วย agent.Move()
+        // ==========================================
+        if (knockbackVelocity.sqrMagnitude > 0.1f)
+        {
+            Debug.Log($"[Knockback] Moving agent by {knockbackVelocity * Time.deltaTime}");
+            // บังคับให้ NavMeshAgent อัปเดตตำแหน่ง
+            agent.Move(knockbackVelocity * Time.deltaTime);
+
+            // ค่อยๆ ชะลอตัว (เปลี่ยนจาก 8 เป็น 5 เพื่อให้กระเด็นไกลขึ้นและนานขึ้น)
+            knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 5f * Time.deltaTime);
+        }
 
         // ==========================================
         // Animation Sync: ซิงค์แอนิเมชันตามความเร็วจริง
@@ -78,10 +94,17 @@ public class EnemyMovement : MonoBehaviour
     /// </summary>
     public void StopMovement()
     {
-        if (agent.isOnNavMesh && !agent.isStopped)
+        if (agent != null && agent.isOnNavMesh && !agent.isStopped)
         {
             agent.isStopped = true;
-            agent.velocity = Vector3.zero; // หยุดไถล
+            agent.ResetPath();
+            
+            // เคลียร์ความเร็วเฉพาะตอนที่ไม่ได้กระเด็นอยู่เท่านั้น
+            // ป้องกันไม่ให้ State.Exit() มาสั่งเบรกหัวทิ่มตอนกำลังกระเด็น
+            if (knockbackVelocity.sqrMagnitude < 0.1f)
+            {
+                agent.velocity = Vector3.zero;
+            }
         }
     }
 
@@ -119,5 +142,29 @@ public class EnemyMovement : MonoBehaviour
             // Slerp หมุนตัวอย่างนุ่มนวล
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
+    }
+
+    /// <summary>
+    /// [เพิ่ม] สั่งให้ศัตรูกระเด็นตามแรงที่ได้รับ (ใช้ตอน Poise แตก)
+    /// ใช้ agent.Move() ทุกเฟรมใน Update เพื่อให้มองเห็นการกระเด็นจริงๆ
+    /// </summary>
+    /// <param name="force">แรงกระเด็น (ทิศทาง x ความแรง)</param>
+    public void ApplyKnockback(Vector3 force)
+    {
+        Debug.Log($"[Knockback] ApplyKnockback Called! Force Received: {force}");
+        
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) 
+        {
+            Debug.LogWarning("[Knockback] Failed! Agent is null, disabled, or not on NavMesh.");
+            return;
+        }
+
+        // บังคับให้ขยับได้แม้อยู่ในสถานะ Stopped
+        agent.isStopped = false;
+        agent.ResetPath();
+
+        // เก็บแรงไว้ แล้วให้ Update จัดการเลื่อนตัวทุกเฟรม
+        knockbackVelocity = force;
+        Debug.Log($"[Knockback] Velocity Set to: {knockbackVelocity}");
     }
 }

@@ -13,6 +13,16 @@ public class EnemyBrain : MonoBehaviour
     [Tooltip("ระบบสายตา (ค้นหาเป้าหมาย)")]
     public TargetDetector targetDetector;
 
+    [Tooltip("ระบบเลือดและความถึก")]
+    public HealthSystem health;
+
+    [Tooltip("Animator สำหรับเล่นแอนิเมชันชะงัก/ตาย")]
+    public Animator animator;
+
+    [Header("Stagger Settings")]
+    [Tooltip("ระยะเวลาชะงัก (วินาที) ก่อนกลับมาทำงานต่อ")]
+    [SerializeField] private float stunDuration = 0.8f;
+
     // สถานะปัจจุบันที่ AI กำลังเป็นอยู่
     private IEnemyState currentState;
 
@@ -23,11 +33,22 @@ public class EnemyBrain : MonoBehaviour
         ChangeState(new IdleState(this));
     }
 
+    // [เพิ่ม] สมัครรับ Event จาก HealthSystem เมื่อเปิดใช้งาน
+    private void OnEnable()
+    {
+        if (health == null) return;
+        health.OnHurt += HandleHurt;
+        health.OnDeath += HandleDeath;
+    }
+
+    // [เพิ่ม] ยกเลิกการสมัครเมื่อปิดใช้งาน ป้องกัน Memory Leak
+
     private void Update()
     {
         // 1. อัปเดตการทำงานของอวัยวะพื้นฐานก่อน (เช่น สายตาต้องทำงานตลอดเวลา)
         // ใช้ตำแหน่งและทิศทางหน้าของตัวเองในการมองหา และส่งตัวเองเป็น excludeRoot เพื่อไม่ให้มองเห็นตัวเอง
-        targetDetector.UpdateDetection(transform, transform.forward, transform);
+        if (targetDetector != null)
+            targetDetector.UpdateDetection(transform, transform.forward, transform);
 
         // 2. สั่งให้ State ปัจจุบันทำงาน
         currentState?.Update();
@@ -68,5 +89,28 @@ public class EnemyBrain : MonoBehaviour
         {
             movement.StopMovement();
         }
+
+        // [เพิ่ม] ยกเลิกการสมัคร Event
+        if (health == null) return;
+        health.OnHurt -= HandleHurt;
+        health.OnDeath -= HandleDeath;
+    }
+
+    // [เพิ่ม] เมื่อเกราะแตก (Poise <= 0) สั่งเล่นแอนิเมชันชะงัก + กระเด็น + หยุด AI ชั่วคราว
+    private void HandleHurt(Vector3 knockbackForce)
+    {
+        if (animator != null) animator.SetTrigger("Hurt");
+
+        // สั่งกระเด็นตามแรงที่ได้รับจาก DamageInfo
+        if (movement != null) movement.ApplyKnockback(knockbackForce);
+
+        // เปลี่ยน State เป็น Stunned เพื่อหยุด AI ไม่ให้สั่ง MoveTo ทับ velocity ของ knockback
+        ChangeState(new StunnedState(this, stunDuration));
+    }
+
+    // [เพิ่ม] เมื่อตาย สั่งเล่นแอนิเมชันตาย
+    private void HandleDeath()
+    {
+        if (animator != null) animator.SetTrigger("Die");
     }
 }

@@ -15,6 +15,7 @@ public enum DamageType
 public struct DamageInfo
 {
     public float damageAmount;     // จำนวนดาเมจ
+    public float poiseDamage;      // ดาเมจทำลายเกราะ (ความถึก)
     public DamageType damageType;  // ประเภทดาเมจ (ค่าเริ่มต้น = Combat)
     public Vector3 hitPoint;       // จุดที่ถูกโจมตี (สำหรับสร้างเอฟเฟกต์หรือเลือด)
     public Vector3 knockbackForce; // แรงกระเด็นที่เป้าหมายจะได้รับ

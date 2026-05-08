@@ -16,11 +16,12 @@ public class IdleState : IEnemyState
     public void Enter()
     {
         Debug.Log("Enter Idle State");
-        // สั่งกล้ามเนื้อให้หยุดเดินทันที
-        brain.movement.StopMovement();
-        
-        // อาจจะสั่งเดินด้วยความเร็วปกติรอไว้ (เผื่อเปลี่ยน state แล้วลืมเซ็ต)
-        brain.movement.SetSpeed(3.5f);
+        // สั่งกล้ามเนื้อให้หยุดเดินทันที (ถ้ามี)
+        if (brain.movement != null)
+        {
+            brain.movement.StopMovement();
+            brain.movement.SetSpeed(3.5f);
+        }
     }
 
     public void Update()

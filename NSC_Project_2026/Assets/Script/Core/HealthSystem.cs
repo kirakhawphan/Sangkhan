@@ -5,10 +5,12 @@ public class HealthSystem : MonoBehaviour, IDamageable
 {
     [Header("Settings")]
     [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float maxPoise = 20f; // [เพิ่ม] ความถึกสูงสุดก่อนจะชะงัก
 
     [Header("Debug (ดูค่าได้ตอน Play Mode)")]
     [SerializeField] private float currentHealth;
     [SerializeField] private float healthPercentage;
+    [SerializeField] private float currentPoise; // [เพิ่ม] ค่าความถึกปัจจุบัน
 
     // อีเวนต์สำหรับส่งค่า % เลือด (0.0 ถึง 1.0) ไปให้ UI หรือระบบอื่นที่ติดตามอยู่
     public event System.Action<float> OnHealthChanged;
@@ -18,6 +20,12 @@ public class HealthSystem : MonoBehaviour, IDamageable
     // อีเวนต์เฉพาะตอนโดนดาเมจ — ส่งทั้งจำนวนดาเมจและประเภท
     // ใช้สำหรับระบบที่ต้องการแยกประเภทดาเมจ เช่น CameraShake, HitFlash, Sound
     public event System.Action<float, DamageType> OnDamageTaken;
+
+    // [เพิ่ม] สำหรับแจ้ง AI/Player ให้เล่นท่าชะงัก (ส่ง knockbackForce ไปด้วย)
+    public event System.Action<Vector3> OnHurt;
+    
+    // [เพิ่ม] สำหรับเล่นเอฟเฟกต์เกราะแตก
+    public event System.Action OnPoiseBroken;
 
     private bool isDead = false;
 
@@ -30,6 +38,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
         // กำหนดเลือดให้เต็มเมื่อเริ่มต้น
         currentHealth = maxHealth;
         healthPercentage = GetHealthPercentage();
+
+        // [เพิ่ม] กำหนดค่า Poise ให้เต็มเมื่อเริ่มต้น
+        currentPoise = maxPoise;
     }
 
     private void Start()
@@ -59,7 +70,22 @@ public class HealthSystem : MonoBehaviour, IDamageable
         if (currentHealth <= 0f)
         {
             Die();
+            return; // Guard Clause ป้องกันการเกิด Poise Broken พร้อมกับตาย
         }
+
+        // --- [เพิ่ม] ลอจิกระบบ Poise (ชะงัก) ---
+        // หักค่า Poise ปัจจุบันด้วยดาเมจ Poise ที่ได้รับ
+        currentPoise -= info.poiseDamage;
+
+        // Guard Clause: ถ้าเกราะยังไม่แตก (Poise > 0) ให้ออกจากฟังก์ชันไปเลย ไม่ต้องชะงัก
+        if (currentPoise > 0) return;
+
+        // เมื่อเกราะแตก (Poise <= 0): ให้รีเซ็ตค่ากลับให้เต็ม
+        currentPoise = maxPoise;
+
+        // ยิง Event แจ้งเอฟเฟกต์เกราะแตก และสั่งให้ตัวละครชะงัก
+        OnPoiseBroken?.Invoke();
+        OnHurt?.Invoke(info.knockbackForce);
     }
 
     /// <summary>

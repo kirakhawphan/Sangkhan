@@ -15,14 +15,14 @@ public class ChaseState : IEnemyState
     public void Enter()
     {
         Debug.Log("Enter Chase State");
-        // เพิ่มความเร็วในการวิ่งไล่ล่า
-        brain.movement.SetSpeed(6f);
+        // เพิ่มความเร็วในการวิ่งไล่ล่า (ถ้ามี)
+        if (brain.movement != null) brain.movement.SetSpeed(6f);
     }
 
     public void Update()
     {
         // 1. เช็คก่อนว่าเป้าหมายยังอยู่ในสายตาไหม
-        if (brain.targetDetector.CurrentTarget == null)
+        if (brain.targetDetector == null || brain.targetDetector.CurrentTarget == null)
         {
             // ถ้าเป้าหมายหลุดระยะ หรือถูกลบออกไป ให้กลับไปสถานะ Idle
             brain.ChangeState(new IdleState(brain));
@@ -32,14 +32,14 @@ public class ChaseState : IEnemyState
         // 2. ถ้ายังมีเป้าหมายอยู่ ก็ดึงพิกัดล่าสุดของเป้าหมาย
         Vector3 targetPosition = brain.targetDetector.CurrentTarget.transform.position;
 
-        // 3. สั่งกล้ามเนื้อให้วิ่งไปที่พิกัดนั้น
-        brain.movement.MoveTo(targetPosition);
+        // 3. สั่งกล้ามเนื้อให้วิ่งไปที่พิกัดนั้น (ถ้ามี)
+        if (brain.movement != null) brain.movement.MoveTo(targetPosition);
     }
 
     public void Exit()
     {
         Debug.Log("Exit Chase State");
-        // สั่งหยุดเดินเมื่อเลิกไล่ล่า
-        brain.movement.StopMovement();
+        // สั่งหยุดเดินเมื่อเลิกไล่ล่า (ถ้ามี)
+        if (brain.movement != null) brain.movement.StopMovement();
     }
 }
