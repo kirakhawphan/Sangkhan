@@ -3043,6 +3043,33 @@ CharacterController:
   m_CorrespondingSourceObject: {fileID: 5605646302524281039, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
   m_PrefabInstance: {fileID: 5570012301528945479}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2128612646 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5594618474703239583, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+  m_PrefabInstance: {fileID: 7454679213429462675}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &2128612653 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1157407118677752159, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+  m_PrefabInstance: {fileID: 7454679213429462675}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2128612655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2128612646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd146a40b66ce7542988e92a2f37975d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
+  maxHealth: 100
+  maxPoise: 20
+  currentHealth: 0
+  healthPercentage: 0
+  currentPoise: 0
 --- !u!1001 &5570012301528945479
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3467,6 +3494,18 @@ PrefabInstance:
       propertyPath: m_Center.y
       value: 1.07
       objectReference: {fileID: 0}
+    - target: {fileID: 3588264662318405034, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: keepDistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3588264662318405034, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: retreatDistance
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3588264662318405034, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: stoppingDistance
+      value: 3.5
+      objectReference: {fileID: 0}
     - target: {fileID: 5111518991855543077, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: m_LocalPosition.x
       value: 26.12
@@ -3511,6 +3550,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: HumanM_Model
       objectReference: {fileID: 0}
+    - target: {fileID: 7822238004104155648, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: health
+      value: 
+      objectReference: {fileID: 2128612655}
+    - target: {fileID: 7822238004104155648, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: animator
+      value: 
+      objectReference: {fileID: 2128612653}
     - target: {fileID: 8458704675453059391, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
@@ -3526,7 +3573,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5594618474703239583, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2128612655}
   m_SourcePrefab: {fileID: 100100000, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

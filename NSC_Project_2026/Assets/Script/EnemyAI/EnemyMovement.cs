@@ -15,7 +15,14 @@ public class EnemyMovement : MonoBehaviour
 
     [Header("Settings")]
     [Tooltip("ความเร็วในการหันหน้าเข้าหาเป้าหมาย (ใช้ในฟังก์ชัน FaceTarget)")]
-    [SerializeField] private float rotationSpeed = 5f;
+    [SerializeField] private float moveSpeed = 3.5f;
+    [SerializeField] private float stoppingDistance = 2.0f; // ระยะที่จะให้ AI หยุดยืนห่างจากผู้เล่น
+    [SerializeField] private float rotationSpeed = 10f;     // ความเร็วในการหันหน้าไปหาผู้เล่น
+
+    [Header("Distance Maintenance")]
+    [SerializeField] private bool keepDistance = false;    // [เพิ่ม] สวิตช์เปิด-ปิดระบบเดินหนี
+    [SerializeField] private float retreatDistance = 1.5f;  // [เพิ่ม] ถ้าน้อยกว่าระยะนี้ จะเริ่มเดินหนี
+    [SerializeField] private float retreatMultiplier = 2f;  // [เพิ่ม] ตัวคูณระยะถอย (ยิ่งเยอะยิ่งถอยไกล)
 
     // --- Cached Components (Optimization) ---
     private NavMeshAgent agent;
@@ -30,6 +37,13 @@ public class EnemyMovement : MonoBehaviour
     {
         // ดึง NavMeshAgent บน GameObject เดียวกัน
         agent = GetComponent<NavMeshAgent>();
+
+        // [เพิ่ม] ตั้งค่าระยะหยุดให้กับ Agent
+        if (agent != null)
+        {
+            agent.stoppingDistance = stoppingDistance;
+            agent.speed = moveSpeed;
+        }
 
         // ถ้าลืมใส่ Animator ใน Inspector ให้หาอัตโนมัติ
         if (animator == null)
@@ -80,12 +94,42 @@ public class EnemyMovement : MonoBehaviour
     /// <param name="destination">พิกัดบนโลก (World Space) ที่ต้องการให้เดินไป</param>
     public void MoveTo(Vector3 destination)
     {
-        if (agent.isOnNavMesh)
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
+        float distanceToTarget = Vector3.Distance(transform.position, destination);
+
+        // [เพิ่ม] ระบบเดินหนี (Kiting Logic)
+        if (keepDistance && distanceToTarget < retreatDistance)
         {
-            // ปลดล็อกการหยุดเดิน หากโดนสั่ง StopMovement ไว้
-            if (agent.isStopped) agent.isStopped = false;
+            Debug.Log($"[Kiting] Player too close! Distance: {distanceToTarget:F2} < {retreatDistance}. Fleeing...");
             
-            agent.SetDestination(destination);
+            // คำนวณทิศทางหนี (จากเป้าหมายมาหาตัวเอง)
+            Vector3 fleeDirection = (transform.position - destination).normalized;
+            Vector3 fleePosition = transform.position + (fleeDirection * retreatMultiplier);
+
+            // ตรวจสอบพิกัดบน NavMesh ว่าถอยไปได้ไหม
+            if (NavMesh.SamplePosition(fleePosition, out NavMeshHit hit, 3.0f, NavMesh.AllAreas))
+            {
+                agent.stoppingDistance = 0; // [สำคัญ] ปิดระยะหยุดชั่วคราวเพื่อให้มันยอมถอย
+                agent.SetDestination(hit.position);
+                FaceTarget(destination);
+                return;
+            }
+            else
+            {
+                Debug.LogWarning("[Kiting] No space to flee behind!");
+            }
+        }
+
+        // --- ลอจิกเดิม: เดินเข้าหาปกติ ---
+        if (agent.isStopped) agent.isStopped = false;
+        
+        agent.stoppingDistance = stoppingDistance; // [คืนค่า] กลับไปใช้ระยะหยุดที่ตั้งไว้ใน Inspector
+        agent.SetDestination(destination);
+
+        if (distanceToTarget <= agent.stoppingDistance)
+        {
+            FaceTarget(destination);
         }
     }
 
@@ -151,20 +195,19 @@ public class EnemyMovement : MonoBehaviour
     /// <param name="force">แรงกระเด็น (ทิศทาง x ความแรง)</param>
     public void ApplyKnockback(Vector3 force)
     {
-        Debug.Log($"[Knockback] ApplyKnockback Called! Force Received: {force}");
-        
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh) 
-        {
-            Debug.LogWarning("[Knockback] Failed! Agent is null, disabled, or not on NavMesh.");
-            return;
-        }
-
-        // บังคับให้ขยับได้แม้อยู่ในสถานะ Stopped
-        agent.isStopped = false;
-        agent.ResetPath();
-
-        // เก็บแรงไว้ แล้วให้ Update จัดการเลื่อนตัวทุกเฟรม
+        // ... (โค้ดเดิม) ...
         knockbackVelocity = force;
-        Debug.Log($"[Knockback] Velocity Set to: {knockbackVelocity}");
+    }
+
+    // [เพิ่ม] วาดวงกลมในหน้า Scene เพื่อให้เห็นระยะหยุดและระยะถอย
+    private void OnDrawGizmosSelected()
+    {
+        // วงกลมสีเขียว = ระยะหยุด (Stopping Distance)
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, stoppingDistance);
+
+        // วงกลมสีแดง = ระยะถอยหนี (Retreat Distance)
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, retreatDistance);
     }
 }
