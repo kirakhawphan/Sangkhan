@@ -140,6 +140,28 @@ public class EnemyMovement : MonoBehaviour
     }
 
     /// <summary>
+    /// [เพิ่ม] คืนค่าระยะทางที่เหลือกว่าจะถึงจุดหมาย (ใช้เช็คว่าเดินถึงหรือยัง)
+    /// </summary>
+    public float GetRemainingDistance()
+    {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return float.MaxValue;
+        
+        // ถ้ากำลังคำนวณเส้นทางอยู่ ให้ถือว่ายังไม่ถึง
+        if (agent.pathPending) return float.MaxValue;
+
+        return agent.remainingDistance;
+    }
+
+    /// <summary>
+    /// [เพิ่ม] คืนค่าระยะหยุดที่ตั้งไว้
+    /// </summary>
+    public float GetStoppingDistance()
+    {
+        if (agent == null) return 0f;
+        return agent.stoppingDistance;
+    }
+
+    /// <summary>
     /// สั่งให้เอเจนต์หยุดเดินทันที (ลบเป้าหมายการเดินทิ้ง)
     /// </summary>
     public void StopMovement()

@@ -1527,11 +1527,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MeleeHitbox
   attackPoint: {fileID: 1611924986}
-  attackRadius: 0.2
+  attackRadius: 0.5
   targetLayer:
     serializedVersion: 2
     m_Bits: 1024
-  attackDamage: 5
+  attackDamage: 10
   poiseDamage: 0
   knockbackPower: 10
 --- !u!1 &996432650
@@ -3058,11 +3058,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MeleeHitbox
   attackPoint: {fileID: 882635399}
-  attackRadius: 0.2
+  attackRadius: 0.5
   targetLayer:
     serializedVersion: 2
     m_Bits: 1024
-  attackDamage: 5
+  attackDamage: 10
   poiseDamage: 0
   knockbackPower: 10
 --- !u!114 &2073900280 stripped
@@ -3633,6 +3633,10 @@ PrefabInstance:
     - target: {fileID: 3588264662318405034, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: keepDistance
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3588264662318405034, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: rotationSpeed
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3588264662318405034, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: retreatDistance

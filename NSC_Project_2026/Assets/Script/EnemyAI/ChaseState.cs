@@ -40,8 +40,12 @@ public class ChaseState : IEnemyState
         {
             float distance = Vector3.Distance(brain.transform.position, targetPosition);
             float range = brain.combat.GetAttackRange();
+            
+            // [แก้ไข] จะต่อยก็ต่อเมื่อ: เข้าขอบระยะต่อยแล้ว และ NavMeshAgent เดินเข้ามาถึงระยะหยุด (Stopping Distance) แล้วจริงๆ
+            bool isCloseEnough = (distance <= range);
+            bool isNearStoppingPoint = (brain.movement.GetRemainingDistance() <= brain.movement.GetStoppingDistance() + 0.1f);
 
-            if (distance <= range)
+            if (isCloseEnough && isNearStoppingPoint)
             {
                 brain.ChangeState(new AttackState(brain));
             }
