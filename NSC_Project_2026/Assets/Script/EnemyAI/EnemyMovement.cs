@@ -7,6 +7,7 @@ using UnityEngine.AI;
 /// ห้ามใส่ Logic ตัดสินใจ (AI Decision) ลงในนี้เด็ดขาด
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
+[RequireComponent(typeof(CharacterController))]
 public class EnemyMovement : MonoBehaviour
 {
     [Header("References")]
@@ -26,6 +27,7 @@ public class EnemyMovement : MonoBehaviour
 
     // --- Cached Components (Optimization) ---
     private NavMeshAgent agent;
+    private CharacterController controller;
 
     // [เพิ่ม] เก็บแรงกระเด็นที่ยังค้างอยู่ เพื่อใช้ใน Update
     private Vector3 knockbackVelocity;
@@ -39,10 +41,20 @@ public class EnemyMovement : MonoBehaviour
     {
         // ดึง NavMeshAgent บน GameObject เดียวกัน
         agent = GetComponent<NavMeshAgent>();
+        controller = GetComponent<CharacterController>();
 
-        // [เพิ่ม] ตั้งค่าระยะหยุดให้กับ Agent
+        // [สำคัญ] ปรับแต่ง CharacterController ให้พร้อมใช้งาน
+        if (controller != null)
+        {
+            controller.enabled = true; // มั่นใจว่าเปิดไว้เพื่อให้เป็น 'ร่างกาย'
+        }
+
+        // [สำคัญ] ปิดการอัปเดตตำแหน่งอัตโนมัติ เพื่อให้ CharacterController เป็นตัวคุมตำแหน่งแทน
         if (agent != null)
         {
+            agent.updatePosition = false;
+            agent.updateRotation = true;
+            
             agent.stoppingDistance = stoppingDistance;
             agent.speed = moveSpeed;
         }
@@ -60,16 +72,47 @@ public class EnemyMovement : MonoBehaviour
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
 
         // ==========================================
-        // [เพิ่ม] Knockback: เลื่อนตัวละครทุกเฟรมด้วย agent.Move()
+        // 1. ระบบ Knockback (ความสำคัญสูงสุด)
         // ==========================================
-        if (knockbackVelocity.sqrMagnitude > 0.1f)
-        {
-            Debug.Log($"[Knockback] Moving agent by {knockbackVelocity * Time.deltaTime}");
-            // บังคับให้ NavMeshAgent อัปเดตตำแหน่ง
-            agent.Move(knockbackVelocity * Time.deltaTime);
+        bool isKnockedBack = knockbackVelocity.sqrMagnitude > 0.1f;
 
-            // ค่อยๆ ชะลอตัว (เปลี่ยนจาก 8 เป็น 5 เพื่อให้กระเด็นไกลขึ้นและนานขึ้น)
+        if (isKnockedBack)
+        {
+            // เช็ค .enabled ก่อนเพื่อความปลอดภัย
+            if (controller.enabled)
+            {
+                controller.Move(knockbackVelocity * Time.deltaTime);
+            }
+            else
+            {
+                // ถ้า Controller ปิดอยู่ ให้เลื่อน Transform ตรงๆ แทน (Fallback)
+                transform.position += knockbackVelocity * Time.deltaTime;
+            }
+
+            // ค่อยๆ ชะลอตัว
             knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, 5f * Time.deltaTime);
+        }
+        // ==========================================
+        // 2. Movement Sync: ถ้าไม่กระเด็น ค่อยเดินตาม NavMesh ด้วย CharacterController
+        // ==========================================
+        else if (agent.enabled && agent.isOnNavMesh)
+        {
+            // คำนวณความเร็วที่ Agent ต้องการจะไป
+            Vector3 worldDeltaPosition = agent.nextPosition - transform.position;
+
+            // ย้ายตัวละครจริงๆ ผ่าน CharacterController (เพื่อให้เกิดการชน/ไม่ทะลุ)
+            if (controller.enabled && worldDeltaPosition.magnitude > 0.001f)
+            {
+                controller.Move(worldDeltaPosition);
+            }
+        }
+
+        // ==========================================
+        // 3. สำคัญมาก: อัปเดตตำแหน่งกลับไปให้ NavMeshAgent รับรู้ (ป้องกันการดึงกลับไปที่เดิม)
+        // ==========================================
+        if (agent.enabled && agent.isOnNavMesh)
+        {
+            agent.nextPosition = transform.position;
         }
 
         // ==========================================

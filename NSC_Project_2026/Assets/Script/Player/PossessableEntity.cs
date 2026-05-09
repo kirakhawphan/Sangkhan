@@ -117,8 +117,9 @@ public class PossessableEntity : MonoBehaviour
                 yield return null; // รอเฟรมถัดไป
             }
 
-            // พอแตะพื้นแล้ว (หรือหมดเวลา) ให้ปิดทิ้งเพื่อกันไปตีกับ NavMeshAgent
-            characterController.enabled = false;
+            // [ลบออก] เราจะไม่ปิด CharacterController แล้ว 
+            // เพราะต้องการให้ AI มี 'ร่างกาย' ไว้ชนกับผู้เล่น และใช้เดินด้วย NavMesh Sync
+            // characterController.enabled = false;
         }
 
         // ขั้นที่ 3: เปิดระบบเดินของ AI

@@ -46,7 +46,7 @@ public class SimpleKnockback : MonoBehaviour
             }
             else
             {
-                // ถ้าไม่มี ให้เลื่อนตำแหน่ง transform ตรงๆ
+                // ถ้าไม่มี หรือ Controller ปิดอยู่ ให้เลื่อนตำแหน่ง transform ตรงๆ
                 transform.position += knockbackVelocity * Time.deltaTime;
             }
 

@@ -95,7 +95,7 @@ public class TargetDetector
     /// <param name="direction">ทิศทางของ Ray</param>
     public void DrawGizmos(Vector3 origin, Vector3 direction)
     {
-        Gizmos.color = Color.yellow;
+        Gizmos.color = Color.red;
 
         switch (detectionMode)
         {

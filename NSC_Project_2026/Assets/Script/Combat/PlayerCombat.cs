@@ -271,4 +271,19 @@ public class PlayerCombat : MonoBehaviour
         
         return true; // สำรองไว้ในกรณีที่ไม่ได้ใส่ Controller ให้ตีได้ตลอด
     }
+
+    /// <summary>
+    /// วาดวงกลม/เส้นสีแดงใน Scene View เพื่อให้เห็นระยะ Target Detector
+    /// </summary>
+    private void OnDrawGizmosSelected()
+    {
+        if (targetDetector != null && aimOrigin != null)
+        {
+            targetDetector.DrawGizmos(aimOrigin.position, aimOrigin.forward);
+        }
+        else if (targetDetector != null) // กรณีลืมใส่ aimOrigin ก็ยังให้วาดออกมาจากตัวเอง
+        {
+            targetDetector.DrawGizmos(transform.position, transform.forward);
+        }
+    }
 }

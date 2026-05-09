@@ -1229,7 +1229,7 @@ MonoBehaviour:
     m_Bits: 512
   attackDamage: 20
   poiseDamage: 20
-  knockbackPower: 10
+  knockbackPower: 5
 --- !u!4 &801186342
 Transform:
   m_ObjectHideFlags: 0
@@ -2103,7 +2103,7 @@ MonoBehaviour:
     m_Bits: 512
   attackDamage: 20
   poiseDamage: 20
-  knockbackPower: 10
+  knockbackPower: 5
 --- !u!1 &1370343534
 GameObject:
   m_ObjectHideFlags: 0
@@ -3122,9 +3122,9 @@ MonoBehaviour:
   controller: {fileID: 2073900292}
   maxComboStep: 2
   inputBufferTime: 0.2
-  attackCooldown: 0.3
+  attackCooldown: 0.5
   comboResetTime: 0.7
-  comboFinishCooldown: 1.5
+  comboFinishCooldown: 1
   normalAttackLockTime: 0.3
   finishAttackLockTime: 1
   dashCurve:
@@ -3194,7 +3194,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd146a40b66ce7542988e92a2f37975d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
-  maxHealth: 100
+  maxHealth: 500
   maxPoise: 20
   currentHealth: 0
   healthPercentage: 0
