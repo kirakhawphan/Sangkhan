@@ -41,9 +41,14 @@ public class MeleeHitbox : MonoBehaviour
             if (targetDamageable != null && targetDamageable != myDamageable)
             {
                 Debug.Log($"   => ฟันเข้าเป้า! ส่งดาเมจไปที่ '{col.gameObject.name}'");
-                // [แก้] คำนวณทิศทางการกระเด็น และบังคับให้อยู่ในแนวนอน (y = 0) ป้องกันแรงกดลงพื้น
-                Vector3 knockbackDir = col.transform.position - transform.position;
+                // หาจุดกึ่งกลางของคนตี (ถ้ามี HealthSystem ให้ยึดจากตรงนั้น ไม่งั้นใช้ Root)
+                Transform attackerBody = (myDamageable as Component)?.transform ?? transform.root;
+                Transform targetBody = (targetDamageable as Component)?.transform ?? col.transform;
+
+                // [แก้] คำนวณทิศทางการกระเด็นจากตัวคนตี -> คนถูกตี เพื่อป้องกันแรงกระเด็นเพี้ยนเวลาเหวี่ยงแขน
+                Vector3 knockbackDir = targetBody.position - attackerBody.position;
                 knockbackDir.y = 0;
+                if (knockbackDir.sqrMagnitude < 0.001f) knockbackDir = attackerBody.forward; // กันบั๊กทับกันพอดี
                 knockbackDir = knockbackDir.normalized;
                 
                 // สร้าง DamageInfo ในรูปแบบของ Struct (ไม่มีการ Alloc Memory บน Heap = Zero GC)

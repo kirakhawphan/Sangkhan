@@ -28,6 +28,7 @@ public class HealthSystem : MonoBehaviour, IDamageable
     public event System.Action OnPoiseBroken;
 
     private bool isDead = false;
+    private Playermovement playerMovementCache; // แคชไว้ตรวจสอบสถานะการสิงร่าง
 
     // Property สาธารณะ เพื่อให้สคริปต์ภายนอก (เช่น HealthBarUI) ดึงค่า % เลือดปัจจุบันได้ทันที
     // ใช้ตอนสลับเป้าหมาย (Possession) เพื่ออัปเดตหลอดเลือดแบบไม่ต้องรอ Event
@@ -41,6 +42,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
 
         // [เพิ่ม] กำหนดค่า Poise ให้เต็มเมื่อเริ่มต้น
         currentPoise = maxPoise;
+
+        // แคช Playermovement ไว้ตรวจสอบว่าเป็นผู้เล่นหรือไม่ (ใช้ทำ Super Armor)
+        playerMovementCache = GetComponent<Playermovement>();
     }
 
     private void Start()
@@ -74,8 +78,8 @@ public class HealthSystem : MonoBehaviour, IDamageable
         }
 
         // --- [เพิ่ม] ลอจิกระบบ Poise (ชะงัก) ---
-        // เช็คว่าถ้าเลเยอร์ของร่างนี้คือ "Player" (ผู้เล่นสิงอยู่ หรือเป็นพระเอก) จะไม่โดนระบบ Poise (ได้ Super Armor)
-        if (gameObject.layer == LayerMask.NameToLayer("Player")) return;
+        // เช็คว่าถ้าเป็นผู้เล่นกำลังควบคุมร่างนี้อยู่ (isPossessed) จะได้รับ Super Armor ทันที (ไม่ชะงัก)
+        if (playerMovementCache != null && playerMovementCache.isPossessed) return;
 
         // หักค่า Poise ปัจจุบันด้วยดาเมจ Poise ที่ได้รับ
         currentPoise -= info.poiseDamage;

@@ -8,6 +8,9 @@ public class SimpleKnockback : MonoBehaviour
     [Tooltip("ระบบเลือด (สำหรับรับ Event ตอนโดนตี)")]
     public HealthSystem health;
 
+    [Tooltip("Animator สำหรับเล่นแอนิเมชันชะงัก (ใส่หรือไม่ใส่ก็ได้)")]
+    public Animator animator;
+
     private Vector3 knockbackVelocity;
     private CharacterController characterController;
 
@@ -15,6 +18,7 @@ public class SimpleKnockback : MonoBehaviour
     {
         // เช็คว่ามี CharacterController ติดมาด้วยไหม
         characterController = GetComponent<CharacterController>();
+        if (animator == null) animator = GetComponentInChildren<Animator>();
     }
 
     private void OnEnable()
@@ -32,6 +36,12 @@ public class SimpleKnockback : MonoBehaviour
     private void ApplyKnockback(Vector3 force)
     {
         knockbackVelocity = force;
+        
+        // เล่นแอนิเมชันโดนตี (ถ้ามี)
+        if (animator != null)
+        {
+            animator.SetTrigger("Hurt");
+        }
     }
 
     private void Update()
