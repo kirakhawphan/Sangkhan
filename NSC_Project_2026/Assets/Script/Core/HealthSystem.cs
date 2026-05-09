@@ -74,6 +74,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
         }
 
         // --- [เพิ่ม] ลอจิกระบบ Poise (ชะงัก) ---
+        // เช็คว่าถ้าเลเยอร์ของร่างนี้คือ "Player" (ผู้เล่นสิงอยู่ หรือเป็นพระเอก) จะไม่โดนระบบ Poise (ได้ Super Armor)
+        if (gameObject.layer == LayerMask.NameToLayer("Player")) return;
+
         // หักค่า Poise ปัจจุบันด้วยดาเมจ Poise ที่ได้รับ
         currentPoise -= info.poiseDamage;
 

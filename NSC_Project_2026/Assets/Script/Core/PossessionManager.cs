@@ -7,9 +7,6 @@ public class PossessionManager : MonoBehaviour
     [SerializeField, Tooltip("ตัวละครเริ่มต้นที่ผู้เล่นควบคุม (ลากตัวละครที่มี Playermovement มาใส่)")]
     private Playermovement currentBody;
 
-    [SerializeField, Tooltip("วิญญาณระบบต่อสู้ (ลากสคริปต์ PlayerCombat ของ Player ตัวหลักมาใส่)")]
-    private PlayerCombat playerCombat;
-
     [SerializeField, Tooltip("กล้องของผู้เล่น (ลาก Main Camera มาใส่ช่องนี้)")]
     private Camera playerCamera;
 
@@ -56,12 +53,6 @@ public class PossessionManager : MonoBehaviour
             currentBody.SetupCamera(playerCamera.transform);
             currentBody.isPossessed = true;
             currentBody.enabled = true; // มั่นใจว่าเปิดใช้งาน
-            
-            // ให้วิญญาณต่อสู้สิงร่างเริ่มต้น
-            if (playerCombat != null)
-            {
-                playerCombat.PossessBody(currentBody.gameObject);
-            }
         }
     }
 
@@ -166,6 +157,14 @@ public class PossessionManager : MonoBehaviour
                 currentBody.isPossessed = false;
                 currentBody.cameraLocked = false; // ปลดล็อกกล้องตัวเก่า
                 
+                // [เพิ่ม] บังคับปิด PlayerCombat ของร่างเก่าทันที (Safety Net)
+                // ป้องกันกรณี PossessableEntity ไม่ได้ตั้งค่าช่อง PlayerCombat ไว้
+                PlayerCombat oldCombat = currentBody.GetComponent<PlayerCombat>();
+                if (oldCombat != null)
+                {
+                    oldCombat.enabled = false;
+                }
+
                 // หากตัวเก่ามี PossessableEntity ให้เรียก OnUnpossessed เพื่อคืนชีพ AI
                 if (currentBody.TryGetComponent(out PossessableEntity oldEntity))
                 {
@@ -187,14 +186,8 @@ public class PossessionManager : MonoBehaviour
             newBody.isPossessed = true;
             newBody.enabled = true;
             
-            // เรียกฟังก์ชัน OnPossessed เพื่อให้ AI หลับ และสลับโหมด
+            // เรียกฟังก์ชัน OnPossessed เพื่อให้ AI หลับ และสลับโหมด (รวมถึงเปิด PlayerCombat บนร่างใหม่ด้วย)
             targetEntity.OnPossessed();
-
-            // ให้วิญญาณนักสู้ (PlayerCombat) สลับไปสิงอวัยวะของร่างใหม่
-            if (playerCombat != null)
-            {
-                playerCombat.PossessBody(newBody.gameObject);
-            }
 
             // 5. เริ่มระบบ Smooth Camera Transition (ถ้าเปิดใช้งาน)
             if (cameraTransitionDuration > 0f)

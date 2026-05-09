@@ -21,6 +21,9 @@ public class PossessableEntity : MonoBehaviour
     [SerializeField, Tooltip("ระบบควบคุมตัวละครของผู้เล่น")]
     private MonoBehaviour playerController;
 
+    [SerializeField, Tooltip("ระบบต่อสู้ของผู้เล่น (เปิดตอนสิงร่าง, ปิดตอนออก)")]
+    private PlayerCombat playerCombat;
+
     [SerializeField, Tooltip("ระบบฟิสิกส์การชนและการเดินของผู้เล่น (ถ้ามี)")]
     private CharacterController characterController;
 
@@ -94,6 +97,12 @@ public class PossessableEntity : MonoBehaviour
             playerController.enabled = true;
         }
 
+        // 5. [เพิ่ม] เปิดระบบต่อสู้ของผู้เล่น
+        if (playerCombat != null)
+        {
+            playerCombat.enabled = true;
+        }
+
         // 5. เปลี่ยน Layer ของเป้าหมายเรดาร์เป็น "Player"
         if (radarTarget != null && playerLayerCache != -1)
         {
@@ -125,6 +134,12 @@ public class PossessableEntity : MonoBehaviour
         if (playerController != null)
         {
             playerController.enabled = false;
+        }
+
+        // 2. [เพิ่ม] ปิดระบบต่อสู้ของผู้เล่น
+        if (playerCombat != null)
+        {
+            playerCombat.enabled = false;
         }
 
         // 2. เปลี่ยน Layer เรดาร์กลับคืนให้กลายเป็นเป้าหมายรอให้คนอื่นมาสิงต่อ

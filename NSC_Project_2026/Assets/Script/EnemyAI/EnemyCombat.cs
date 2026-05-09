@@ -10,6 +10,10 @@ public class EnemyCombat : MonoBehaviour
     [SerializeField] private float attackRange = 1.5f;
     [SerializeField] private int comboStep = 1; // [เพิ่ม] ท่าที่ต้องการให้ AI ใช้ (เช่น 1, 2 หรือ 3)
 
+    [Header("Movement Locks")]
+    [SerializeField] private float normalAttackLockTime = 0.5f; // ระยะเวลาล็อกการเดินท่าปกติ
+    [SerializeField] private float finishAttackLockTime = 1f; // ระยะเวลาล็อกการเดินเฉพาะท่าจบคอมโบ
+
     [Header("References")]
     [SerializeField] private Animator animator;
 
@@ -18,6 +22,19 @@ public class EnemyCombat : MonoBehaviour
     private readonly int comboStepHash = Animator.StringToHash("ComboStep");
     private readonly int groundedHash = Animator.StringToHash("IsGrounded");
     private readonly int isWalkingHash = Animator.StringToHash("isWalking"); // [เพิ่ม] สั่งปิดเดินตอนต่อย
+
+    // ตัวแปรสำหรับล็อกการเดิน
+    private float currentMovementLockTimer;
+
+    public bool IsAttacking
+    {
+        get { return currentMovementLockTimer > 0f; }
+    }
+
+    private void Update()
+    {
+        if (currentMovementLockTimer > 0f) currentMovementLockTimer -= Time.deltaTime;
+    }
 
     /// <summary>
     /// เช็คว่าพร้อมโจมตีหรือยัง (ดูคูลดาวน์)
@@ -35,6 +52,16 @@ public class EnemyCombat : MonoBehaviour
         if (!CanAttack()) return;
 
         Debug.Log($"[EnemyCombat] {gameObject.name} is performing attack!");
+        
+        // ล็อกการเดิน (อิงจากท่าที่กำลังตี ถ้าเป็นท่า 3 ให้ล็อกนานขึ้น)
+        if (comboStep >= 3)
+        {
+            currentMovementLockTimer = finishAttackLockTime;
+        }
+        else
+        {
+            currentMovementLockTimer = normalAttackLockTime;
+        }
 
         // เล่นแอนิเมชัน
         if (animator != null)

@@ -28,6 +28,9 @@ public class EnemyBrain : MonoBehaviour
 
     // สถานะปัจจุบันที่ AI กำลังเป็นอยู่
     private IEnemyState currentState;
+    
+    // [เพิ่ม] เปิดให้คลาสอื่นเช็คสถานะปัจจุบันได้
+    public IEnemyState CurrentState => currentState;
 
     private void Start()
     {

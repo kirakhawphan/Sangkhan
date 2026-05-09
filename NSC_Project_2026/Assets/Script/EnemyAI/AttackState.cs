@@ -16,10 +16,12 @@ public class AttackState : IEnemyState
 
     public void Enter()
     {
-        // 1. สั่งหยุดเดินก่อนตี
+
+        // 1. สั่งหยุดเดินก่อนตี + ล็อกการเดินให้สนิท
         if (brain.movement != null)
         {
             brain.movement.StopMovement();
+            brain.movement.LockMovement(); // [เพิ่ม] ล็อกการเดินโดยตรง
         }
 
         // 2. สั่งโจมตี
@@ -34,6 +36,12 @@ public class AttackState : IEnemyState
 
     public void Update()
     {
+        // [เพิ่ม] บังคับหยุดเดินทุกเฟรม (Safety Net) เพื่อป้องกันสคริปต์อื่นมาสั่งเดินทับ
+        if (brain.movement != null)
+        {
+            brain.movement.StopMovement();
+        }
+
         // หันหน้าหาผู้เล่นตลอดเวลาที่ตี เพื่อความแม่นยำ
         Transform target = brain.targetDetector != null ? brain.targetDetector.CurrentTarget?.transform : null;
         if (target != null && brain.movement != null)
@@ -50,6 +58,13 @@ public class AttackState : IEnemyState
 
     public void Exit()
     {
+
+        // [เพิ่ม] ปลดล็อกการเดินเมื่อออกจากสถานะตี
+        if (brain.movement != null)
+        {
+            brain.movement.UnlockMovement();
+        }
+
         // เมื่อออกจากสถานะตี ให้รีเซ็ตค่าคอมโบเป็น 0 เพื่อให้ Animator กลับไปท่า Idle/Run
         if (brain.combat != null)
         {

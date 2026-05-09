@@ -32,6 +32,9 @@ public class EnemyMovement : MonoBehaviour
     // [เพิ่ม] เก็บแรงกระเด็นที่ยังค้างอยู่ เพื่อใช้ใน Update
     private Vector3 knockbackVelocity;
 
+    // [เพิ่ม] ระบบล็อกการเดินโดยตรง (ไม่ต้องพึ่ง GetComponent ข้ามสคริปต์)
+    private bool isMovementLocked;
+
     // แคชพารามิเตอร์ Animator เป็น Hash (int) แทนการใช้ String (Zero String Allocation)
     private readonly int speedHash = Animator.StringToHash("Speed");
     private readonly int isWalkingHash = Animator.StringToHash("isWalking");
@@ -97,13 +100,17 @@ public class EnemyMovement : MonoBehaviour
         // ==========================================
         else if (agent.enabled && agent.isOnNavMesh)
         {
-            // คำนวณความเร็วที่ Agent ต้องการจะไป
-            Vector3 worldDeltaPosition = agent.nextPosition - transform.position;
-
-            // ย้ายตัวละครจริงๆ ผ่าน CharacterController (เพื่อให้เกิดการชน/ไม่ทะลุ)
-            if (controller.enabled && worldDeltaPosition.magnitude > 0.001f)
+            // [แก้ไข] ใช้ flag isMovementLocked ที่ถูกสั่งตรงจาก AttackState แทน GetComponent
+            if (!isMovementLocked)
             {
-                controller.Move(worldDeltaPosition);
+                // คำนวณความเร็วที่ Agent ต้องการจะไป
+                Vector3 worldDeltaPosition = agent.nextPosition - transform.position;
+
+                // ย้ายตัวละครจริงๆ ผ่าน CharacterController (เพื่อให้เกิดการชน/ไม่ทะลุ)
+                if (controller.enabled && worldDeltaPosition.magnitude > 0.001f)
+                {
+                    controller.Move(worldDeltaPosition);
+                }
             }
         }
 
@@ -121,14 +128,18 @@ public class EnemyMovement : MonoBehaviour
         if (animator != null && animator.runtimeAnimatorController != null)
         {
             // ดึงความเร็วแนวนอนจาก agent.velocity
-            Vector3 horizontalVelocity = new Vector3(agent.velocity.x, 0f, agent.velocity.z);
-            float currentSpeed = horizontalVelocity.magnitude;
+            float currentSpeed = 0f;
+            if (!isMovementLocked)
+            {
+                Vector3 horizontalVelocity = new Vector3(agent.velocity.x, 0f, agent.velocity.z);
+                currentSpeed = horizontalVelocity.magnitude;
+            }
 
             // อัปเดตพารามิเตอร์ Speed ให้ Animator
             animator.SetFloat(speedHash, currentSpeed, 0.1f, Time.deltaTime);
             
-            // [เพิ่ม] อัปเดตสถานะการเดินและการติดพื้น
-            animator.SetBool(isWalkingHash, currentSpeed > 0.1f);
+            // [แก้ไข] ห้ามเดินถ้าโดนล็อกอยู่
+            animator.SetBool(isWalkingHash, currentSpeed > 0.1f && !isMovementLocked);
             animator.SetBool(isGroundedHash, true); // AI ถือว่าติดพื้นเสมอ
         }
     }
@@ -138,12 +149,39 @@ public class EnemyMovement : MonoBehaviour
     // ==========================================
 
     /// <summary>
+    /// [เพิ่ม] ล็อกการเดินทันที (ใช้ตอนเริ่มตี) — หยุด NavMeshAgent และเคลียร์เส้นทาง
+    /// </summary>
+    public void LockMovement()
+    {
+        isMovementLocked = true;
+
+        // หยุด NavMeshAgent ให้สนิทเพื่อไม่ให้มันสร้าง velocity ใหม่
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+            agent.velocity = Vector3.zero;
+        }
+    }
+
+    /// <summary>
+    /// [เพิ่ม] ปลดล็อกการเดิน (ใช้ตอนตีเสร็จ)
+    /// </summary>
+    public void UnlockMovement()
+    {
+        isMovementLocked = false;
+    }
+
+    /// <summary>
     /// สั่งให้เอเจนต์เดินไปที่พิกัดเป้าหมาย (Destination)
     /// </summary>
     /// <param name="destination">พิกัดบนโลก (World Space) ที่ต้องการให้เดินไป</param>
     public void MoveTo(Vector3 destination)
     {
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
+        // [เพิ่ม] ถ้าถูกล็อกการเดินอยู่ (กำลังโจมตี) ห้ามรับคำสั่งเดินเด็ดขาด
+        if (isMovementLocked) return;
 
         float distanceToTarget = Vector3.Distance(transform.position, destination);
 
@@ -209,7 +247,7 @@ public class EnemyMovement : MonoBehaviour
     /// </summary>
     public void StopMovement()
     {
-        if (agent != null && agent.isOnNavMesh && !agent.isStopped)
+        if (agent != null && agent.isOnNavMesh) // เอา !agent.isStopped ออก เพื่อบังคับให้หยุดเสมอ
         {
             agent.isStopped = true;
             agent.ResetPath();

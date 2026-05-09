@@ -451,6 +451,14 @@ PrefabInstance:
       propertyPath: radarTarget
       value: 
       objectReference: {fileID: 1117966732}
+    - target: {fileID: 4077467143999853028, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: attackLayerWhenAI.m_Bits
+      value: 1024
+      objectReference: {fileID: 0}
+    - target: {fileID: 4077467143999853028, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: attackLayerWhenPossessed.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
     - target: {fileID: 4282560648775662877, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
       propertyPath: m_Layer
       value: 9
@@ -759,7 +767,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.34308, y: 1.779, z: 0.43539023}
+  m_LocalPosition: {x: 23.04, y: 1.779, z: 42.36}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1532,7 +1540,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   attackDamage: 10
-  poiseDamage: 20
+  poiseDamage: 10
   knockbackPower: 10
 --- !u!1 &996432650
 GameObject:
@@ -2420,6 +2428,14 @@ PrefabInstance:
       propertyPath: radarTarget
       value: 
       objectReference: {fileID: 863250610}
+    - target: {fileID: 4077467143999853028, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: attackLayerWhenAI.m_Bits
+      value: 1024
+      objectReference: {fileID: 0}
+    - target: {fileID: 4077467143999853028, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: attackLayerWhenPossessed.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
     - target: {fileID: 4282560648775662877, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
       propertyPath: m_Layer
       value: 9
@@ -2730,7 +2746,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PossessionManager
   currentBody: {fileID: 2073900280}
-  playerCombat: {fileID: 2073900290}
   playerCamera: {fileID: 330585545}
   uiController: {fileID: 1090824936}
   healthBarUI: {fileID: 1090824938}
@@ -2998,6 +3013,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Elite
       objectReference: {fileID: 0}
+    - target: {fileID: 4077467143999853028, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: attackLayerWhenAI.m_Bits
+      value: 1024
+      objectReference: {fileID: 0}
+    - target: {fileID: 4077467143999853028, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: attackLayerWhenPossessed.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3064,7 +3087,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   attackDamage: 10
-  poiseDamage: 20
+  poiseDamage: 10
   knockbackPower: 10
 --- !u!114 &2073900280 stripped
 MonoBehaviour:
@@ -3153,6 +3176,11 @@ MonoBehaviour:
       m_Bits: 512
     scanInterval: 0.2
   aimOrigin: {fileID: 330585546}
+--- !u!143 &2073900292 stripped
+CharacterController:
+  m_CorrespondingSourceObject: {fileID: 5605646302524281039, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+  m_PrefabInstance: {fileID: 5570012301528945479}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2128612646 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5594618474703239583, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
@@ -3200,7 +3228,63 @@ MonoBehaviour:
   attackCooldown: 2
   attackRange: 2
   comboStep: 1
+  normalAttackLockTime: 0.5
+  finishAttackLockTime: 1
   animator: {fileID: 2128612653}
+--- !u!114 &2128612663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2128612646}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 558cfbd5ff9670a4b8d5166e155e2b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
+  maxComboStep: 2
+  inputBufferTime: 0.2
+  attackCooldown: 0.3
+  comboResetTime: 1
+  comboFinishCooldown: 1.5
+  normalAttackLockTime: 0.5
+  finishAttackLockTime: 1
+  dashCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  dashDistance: 2
+  dashDuration: 0.2
+  targetDetector:
+    detectionMode: 0
+    maxDetectionDistance: 15
+    aimRadius: 1.5
+    targetLayer:
+      serializedVersion: 2
+      m_Bits: 512
+    scanInterval: 0.2
+  aimOrigin: {fileID: 330585546}
 --- !u!1001 &5570012301528945479
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3414,12 +3498,24 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 189373285}
     - target: {fileID: 6241551060003191057, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: playerCombat
+      value: 
+      objectReference: {fileID: 2073900290}
+    - target: {fileID: 6241551060003191057, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: playerController
+      value: 
+      objectReference: {fileID: 2073900280}
+    - target: {fileID: 6241551060003191057, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: characterController
+      value: 
+      objectReference: {fileID: 2073900292}
+    - target: {fileID: 6241551060003191057, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: attackLayerWhenAI.m_Bits
       value: 512
       objectReference: {fileID: 0}
     - target: {fileID: 6241551060003191057, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: attackLayerWhenPossessed.m_Bits
-      value: 512
+      value: 1536
       objectReference: {fileID: 0}
     - target: {fileID: 6255283674217623301, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
@@ -3519,7 +3615,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 9.91
+      value: 22.91
       objectReference: {fileID: 0}
     - target: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3642,6 +3738,10 @@ PrefabInstance:
       value: 1.07
       objectReference: {fileID: 0}
     - target: {fileID: 2559155683632304902, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: playerCombat
+      value: 
+      objectReference: {fileID: 2128612663}
+    - target: {fileID: 2559155683632304902, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: attackLayerWhenAI.m_Bits
       value: 1024
       objectReference: {fileID: 0}
@@ -3749,6 +3849,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5594618474703239583, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2128612656}
+    - targetCorrespondingSourceObject: {fileID: 5594618474703239583, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2128612663}
   m_SourcePrefab: {fileID: 100100000, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

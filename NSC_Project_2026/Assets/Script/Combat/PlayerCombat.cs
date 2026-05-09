@@ -2,13 +2,6 @@ using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("Dynamic Body References (Pawn)")]
-    // ตัวแปรอ้างอิงชั่วคราวสำหรับวิญญาณไปสิง (Decoupled Components)
-    private MeleeHitbox[] currentWeaponHitboxes;
-    private Animator currentAnimator;
-    private CharacterController currentController;
-    private Transform currentBodyTransform;
-
     [Header("Combo Settings")]
     [SerializeField] private int maxComboStep = 3;
     [SerializeField] private float inputBufferTime = 0.2f; // ระยะเวลาในการจำ Input ล่วงหน้า
@@ -30,6 +23,12 @@ public class PlayerCombat : MonoBehaviour
     [Header("Combat Targeting (Soft Lock-on)")]
     [SerializeField] private TargetDetector targetDetector;
     [SerializeField] private Transform aimOrigin; // จุดกำเนิดในการเล็งเป้า (เช่น Main Camera หรือ ตัวละคร)
+
+    // --- แคช Component จากร่างกายตัวเอง (ดึงครั้งเดียวตอน Awake) ---
+    private MeleeHitbox[] currentWeaponHitboxes;
+    private Animator currentAnimator;
+    private CharacterController currentController;
+    private Transform currentBodyTransform;
 
     // ตัวแปรจับเวลาต่างๆ
     private float currentBufferTimer;
@@ -55,9 +54,42 @@ public class PlayerCombat : MonoBehaviour
     private readonly int hashComboStep = Animator.StringToHash("ComboStep");
     private readonly int hashAttack = Animator.StringToHash("Attack");
 
+    /// <summary>
+    /// Awake: ดึง Component จากร่างกายตัวเองครั้งเดียว (ทำงานแม้สคริปต์จะ disabled อยู่)
+    /// </summary>
+    private void Awake()
+    {
+        currentAnimator = GetComponentInChildren<Animator>();
+        currentWeaponHitboxes = GetComponentsInChildren<MeleeHitbox>();
+        currentController = GetComponent<CharacterController>();
+        currentBodyTransform = transform;
+
+        Debug.Log($"[PlayerCombat] Awake: {gameObject.name} | Hitbox: {(currentWeaponHitboxes != null ? currentWeaponHitboxes.Length : 0)}");
+    }
+
+    /// <summary>
+    /// OnEnable: รีเซ็ตสถานะคอมโบทุกครั้งที่ถูกเปิดใช้งาน (ตอนถูกสิงร่าง)
+    /// </summary>
+    private void OnEnable()
+    {
+        currentComboStep = 0;
+        currentBufferTimer = 0f;
+        currentAttackCooldownTimer = 0f;
+        currentMovementLockTimer = 0f;
+        comboTimer = 0f;
+        currentComboFinishCooldownTimer = 0f;
+        isDashing = false;
+
+        if (currentAnimator != null)
+        {
+            currentAnimator.SetInteger(hashComboStep, 0);
+        }
+
+    }
+
     private void Update()
     {
-        // Guard Clause: ถ้าร่างกายปัจจุบันว่างเปล่า แสดงว่ายังไม่ได้สิงร่าง หรือร่างพัง ให้หยุดทำงาน
+        // Guard Clause: ถ้าร่างกายปัจจุบันว่างเปล่า ให้หยุดทำงาน
         if (currentAnimator == null) return;
 
         UpdateTimers();
@@ -66,32 +98,6 @@ public class PlayerCombat : MonoBehaviour
         HandleInput();
         ProcessInputBuffer();
         CheckComboTimeout();
-    }
-
-    /// <summary>
-    /// สิงร่าง: ถ่ายโอนการควบคุมไปยังร่างกายใหม่
-    /// </summary>
-    public void PossessBody(GameObject newBody)
-    {
-        if (newBody == null) return;
-
-        // ดึง Component สำคัญจากร่างกายใหม่แบบ Dynamic
-        currentAnimator = newBody.GetComponentInChildren<Animator>();
-        currentWeaponHitboxes = newBody.GetComponentsInChildren<MeleeHitbox>();
-        currentController = newBody.GetComponent<CharacterController>();
-        currentBodyTransform = newBody.transform;
-
-        Debug.Log($"[PlayerCombat] สิงร่างใหม่สำเร็จ: {newBody.name} | พบ Hitbox จำนวน: {(currentWeaponHitboxes != null ? currentWeaponHitboxes.Length : 0)}");
-
-        // รีเซ็ตสถานะคอมโบเพื่อความปลอดภัย
-        currentComboStep = 0;
-        currentBufferTimer = 0f;
-        isDashing = false;
-
-        if (currentAnimator != null)
-        {
-            currentAnimator.SetInteger(hashComboStep, 0);
-        }
     }
 
     /// <summary>
@@ -190,7 +196,7 @@ public class PlayerCombat : MonoBehaviour
     /// </summary>
     private void ExecuteAttack()
     {
-        Debug.Log($"[PlayerCombat] ⚔️ เริ่มการโจมตี! (Combo Step: {currentComboStep + 1})");
+        Debug.Log($"[PlayerCombat] ⚔️ โจมตี! ComboStep={currentComboStep} Max={maxComboStep}");
 
         // ล้างค่า Buffer เป็น 0 ทันทีที่ถูกนำมาใช้งาน
         currentBufferTimer = 0f;
