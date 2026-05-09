@@ -28,12 +28,25 @@ public class PossessableEntity : MonoBehaviour
     [SerializeField, Tooltip("GameObject เปล่าๆ ที่มี Collider รับเลเซอร์เรดาร์")]
     private GameObject radarTarget;
 
+    [Header("Hitbox Layer Switching")]
+    [SerializeField, Tooltip("Layer ของเป้าหมายที่ร่างนี้จะโจมตีเมื่อ 'ผู้เล่น' กำลังสิง (ปกติคือ Possessable/Enemy)")]
+    private LayerMask attackLayerWhenPossessed;
+    
+    [SerializeField, Tooltip("Layer ของเป้าหมายที่ร่างนี้จะโจมตีเมื่อ 'เป็น AI' (ปกติคือ Player)")]
+    private LayerMask attackLayerWhenAI;
+
     // --- แคชค่า Layer ไว้ใช้งาน (Performance Optimization) ---
     private int playerLayerCache = -1;
     private int possessableLayerCache = -1;
+    private int originalBodyLayer = -1; // [เพิ่ม] จำ Layer ดั้งเดิมของตัวเองไว้
+
+    private Coroutine unpossessCoroutine;
 
     private void Awake()
     {
+        // จำ Layer ดั้งเดิมของตัวเองตั้งแต่เริ่มเกม
+        originalBodyLayer = gameObject.layer;
+
         // ดึงค่า Layer ออกมาเก็บไว้ในตัวแปรแค่ครั้งเดียวตอนเริ่มเกม เพื่อไม่ต้องเรียก NameToLayer ซ้ำๆ
         playerLayerCache = LayerMask.NameToLayer("Player");
         possessableLayerCache = LayerMask.NameToLayer("Possessable");
@@ -50,6 +63,13 @@ public class PossessableEntity : MonoBehaviour
     /// </summary>
     public void OnPossessed()
     {
+        // ยกเลิกการคืนชีพ AI ถ้าเราสิงกลับมาทันที
+        if (unpossessCoroutine != null)
+        {
+            StopCoroutine(unpossessCoroutine);
+            unpossessCoroutine = null;
+        }
+
         // 1. ปิดระบบสมอง AI (enabled = false)
         if (aiBrain != null)
         {
@@ -79,6 +99,21 @@ public class PossessableEntity : MonoBehaviour
         {
             radarTarget.layer = playerLayerCache;
         }
+
+        // 6. เปลี่ยน Layer ของตัวเอง (เพื่อรับดาเมจจากศัตรูตัวอื่น)
+        if (playerLayerCache != -1)
+        {
+            gameObject.layer = playerLayerCache;
+        }
+
+        // 7. สลับเป้าหมายของ Hitbox ให้อาวุธหันไปตีศัตรูแทน
+        MeleeHitbox[] hitboxes = GetComponentsInChildren<MeleeHitbox>(true);
+        for (int i = 0; i < hitboxes.Length; i++)
+        {
+            hitboxes[i].SetTargetLayer(attackLayerWhenPossessed);
+        }
+
+        Debug.Log($"[Possession] เข้าสิงร่าง: '{gameObject.name}' | อัปเดต Hitbox ให้เป้าหมายเป็น LayerMask {attackLayerWhenPossessed.value} สำเร็จ");
     }
 
     /// <summary>
@@ -92,8 +127,29 @@ public class PossessableEntity : MonoBehaviour
             playerController.enabled = false;
         }
 
-        // 2. เริ่ม Coroutine เพื่อจัดการการตกสู่พื้นอย่างสมจริงก่อนคืนชีพ AI
-        StartCoroutine(WaitForGroundAndEnableAI());
+        // 2. เปลี่ยน Layer เรดาร์กลับคืนให้กลายเป็นเป้าหมายรอให้คนอื่นมาสิงต่อ
+        if (radarTarget != null && possessableLayerCache != -1)
+        {
+            radarTarget.layer = possessableLayerCache;
+        }
+
+        // 3. เปลี่ยน Layer ของตัวเองกลับเป็นร่างธรรมดาดั้งเดิม (เช่น Enemy หรืออะไรก็ตามที่ตั้งไว้แต่แรก)
+        if (originalBodyLayer != -1)
+        {
+            gameObject.layer = originalBodyLayer;
+        }
+
+        // 4. คืนค่าให้ Hitbox กลับมาตีผู้เล่นเหมือนเดิม
+        MeleeHitbox[] hitboxes = GetComponentsInChildren<MeleeHitbox>(true);
+        for (int i = 0; i < hitboxes.Length; i++)
+        {
+            hitboxes[i].SetTargetLayer(attackLayerWhenAI);
+        }
+
+        Debug.Log($"[Possession] ถอนวิญญาณออกจากร่าง: '{gameObject.name}' | อัปเดต Hitbox ให้เป้าหมายเป็น LayerMask {attackLayerWhenAI.value} สำเร็จ");
+
+        // 5. เริ่ม Coroutine เพื่อจัดการการตกสู่พื้นอย่างสมจริงก่อนคืนชีพ AI
+        unpossessCoroutine = StartCoroutine(WaitForGroundAndEnableAI());
     }
 
     /// <summary>
@@ -133,11 +189,7 @@ public class PossessableEntity : MonoBehaviour
         {
             aiBrain.enabled = true;
         }
-
-        // ขั้นที่ 5: เปลี่ยน Layer เรดาร์กลับคืนให้กลายเป็นเป้าหมายรอให้คนอื่นมาสิงต่อ
-        if (radarTarget != null && possessableLayerCache != -1)
-        {
-            radarTarget.layer = possessableLayerCache;
-        }
+        
+        unpossessCoroutine = null;
     }
 }

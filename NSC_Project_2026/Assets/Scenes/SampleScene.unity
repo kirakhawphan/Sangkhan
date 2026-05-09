@@ -1532,7 +1532,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   attackDamage: 10
-  poiseDamage: 0
+  poiseDamage: 20
   knockbackPower: 10
 --- !u!1 &996432650
 GameObject:
@@ -2582,7 +2582,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 170, y: -30}
-  m_SizeDelta: {x: 300, y: 20}
+  m_SizeDelta: {x: 300, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1596409433
 GameObject:
@@ -2730,6 +2730,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PossessionManager
   currentBody: {fileID: 2073900280}
+  playerCombat: {fileID: 2073900290}
   playerCamera: {fileID: 330585545}
   uiController: {fileID: 1090824936}
   healthBarUI: {fileID: 1090824938}
@@ -3063,7 +3064,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   attackDamage: 10
-  poiseDamage: 0
+  poiseDamage: 20
   knockbackPower: 10
 --- !u!114 &2073900280 stripped
 MonoBehaviour:
@@ -3098,11 +3099,6 @@ MonoBehaviour:
   currentHealth: 0
   healthPercentage: 0
   currentPoise: 0
---- !u!95 &2073900289 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 4110326939117963335, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-  m_PrefabInstance: {fileID: 5570012301528945479}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &2073900290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3115,17 +3111,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 558cfbd5ff9670a4b8d5166e155e2b01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
-  weaponHitboxes:
-  - {fileID: 1342387629}
-  - {fileID: 801186341}
-  animator: {fileID: 2073900289}
-  controller: {fileID: 2073900292}
   maxComboStep: 2
   inputBufferTime: 0.2
   attackCooldown: 0.5
   comboResetTime: 0.7
-  comboFinishCooldown: 1
-  normalAttackLockTime: 0.3
+  comboFinishCooldown: 2
+  normalAttackLockTime: 0.5
   finishAttackLockTime: 1
   dashCurve:
     serializedVersion: 2
@@ -3162,11 +3153,6 @@ MonoBehaviour:
       m_Bits: 512
     scanInterval: 0.2
   aimOrigin: {fileID: 330585546}
---- !u!143 &2073900292 stripped
-CharacterController:
-  m_CorrespondingSourceObject: {fileID: 5605646302524281039, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-  m_PrefabInstance: {fileID: 5570012301528945479}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2128612646 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5594618474703239583, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
@@ -3195,7 +3181,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
   maxHealth: 500
-  maxPoise: 20
+  maxPoise: 35
   currentHealth: 0
   healthPercentage: 0
   currentPoise: 0
@@ -3243,6 +3229,14 @@ PrefabInstance:
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 330585546}
+    - target: {fileID: 621295562132278406, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: mouseSensitivityX
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 621295562132278406, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: mouseSensitivityY
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 663308038361338840, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
       value: 0
@@ -3419,6 +3413,14 @@ PrefabInstance:
       propertyPath: radarTarget
       value: 
       objectReference: {fileID: 189373285}
+    - target: {fileID: 6241551060003191057, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: attackLayerWhenAI.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241551060003191057, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: attackLayerWhenPossessed.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
     - target: {fileID: 6255283674217623301, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Layer
       value: 0
@@ -3517,7 +3519,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.17
+      value: 9.91
       objectReference: {fileID: 0}
     - target: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3525,7 +3527,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 33.99
+      value: 44.43
       objectReference: {fileID: 0}
     - target: {fileID: 8064535461842227773, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3638,6 +3640,14 @@ PrefabInstance:
     - target: {fileID: 2175390178300506558, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: m_Center.y
       value: 1.07
+      objectReference: {fileID: 0}
+    - target: {fileID: 2559155683632304902, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: attackLayerWhenAI.m_Bits
+      value: 1024
+      objectReference: {fileID: 0}
+    - target: {fileID: 2559155683632304902, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: attackLayerWhenPossessed.m_Bits
+      value: 1536
       objectReference: {fileID: 0}
     - target: {fileID: 3588264662318405034, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: keepDistance

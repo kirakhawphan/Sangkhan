@@ -2,10 +2,12 @@ using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("Combat References")]
-    [SerializeField] private MeleeHitbox[] weaponHitboxes;
-    [SerializeField] private Animator animator;
-    [SerializeField] private CharacterController controller; // ใช้สำหรับ Grounded Check (ปรับเปลี่ยนได้ตาม PlayerMovement ของคุณ)
+    [Header("Dynamic Body References (Pawn)")]
+    // ตัวแปรอ้างอิงชั่วคราวสำหรับวิญญาณไปสิง (Decoupled Components)
+    private MeleeHitbox[] currentWeaponHitboxes;
+    private Animator currentAnimator;
+    private CharacterController currentController;
+    private Transform currentBodyTransform;
 
     [Header("Combo Settings")]
     [SerializeField] private int maxComboStep = 3;
@@ -55,6 +57,9 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
+        // Guard Clause: ถ้าร่างกายปัจจุบันว่างเปล่า แสดงว่ายังไม่ได้สิงร่าง หรือร่างพัง ให้หยุดทำงาน
+        if (currentAnimator == null) return;
+
         UpdateTimers();
         UpdateCombatTargeting(); // อัปเดตการหาเป้าหมาย
         HandleDash(); // ย้ายลอจิกพุ่งมาไว้ใน Update เพื่อความเป็น Absolute Zero GC
@@ -64,14 +69,40 @@ public class PlayerCombat : MonoBehaviour
     }
 
     /// <summary>
+    /// สิงร่าง: ถ่ายโอนการควบคุมไปยังร่างกายใหม่
+    /// </summary>
+    public void PossessBody(GameObject newBody)
+    {
+        if (newBody == null) return;
+
+        // ดึง Component สำคัญจากร่างกายใหม่แบบ Dynamic
+        currentAnimator = newBody.GetComponentInChildren<Animator>();
+        currentWeaponHitboxes = newBody.GetComponentsInChildren<MeleeHitbox>();
+        currentController = newBody.GetComponent<CharacterController>();
+        currentBodyTransform = newBody.transform;
+
+        Debug.Log($"[PlayerCombat] สิงร่างใหม่สำเร็จ: {newBody.name} | พบ Hitbox จำนวน: {(currentWeaponHitboxes != null ? currentWeaponHitboxes.Length : 0)}");
+
+        // รีเซ็ตสถานะคอมโบเพื่อความปลอดภัย
+        currentComboStep = 0;
+        currentBufferTimer = 0f;
+        isDashing = false;
+
+        if (currentAnimator != null)
+        {
+            currentAnimator.SetInteger(hashComboStep, 0);
+        }
+    }
+
+    /// <summary>
     /// อัปเดตระบบค้นหาเป้าหมายในการต่อสู้
     /// </summary>
     private void UpdateCombatTargeting()
     {
-        if (targetDetector != null && aimOrigin != null)
+        if (targetDetector != null && aimOrigin != null && currentBodyTransform != null)
         {
-            // ส่ง transform เป็น excludeRoot เพื่อไม่ให้ล็อกเป้าตัวเอง
-            targetDetector.UpdateDetection(aimOrigin, aimOrigin.forward, transform);
+            // ส่ง currentBodyTransform เป็น excludeRoot เพื่อไม่ให้สิงร่างแล้วเล็งเป้าเข้าตัวเอง
+            targetDetector.UpdateDetection(aimOrigin, aimOrigin.forward, currentBodyTransform);
         }
     }
 
@@ -108,12 +139,12 @@ public class PlayerCombat : MonoBehaviour
         // หาค่าความแรง ณ เวลานั้นจาก Curve
         float force = dashCurve.Evaluate(normalizedTime);
         
-        // คำนวณระยะการเคลื่อนที่ในเฟรมนี้
-        Vector3 dashMovement = transform.forward * ((dashDistance / dashDuration) * force * Time.deltaTime);
+        // คำนวณระยะการเคลื่อนที่ในเฟรมนี้ โดยอ้างอิงจากหน้าของร่างที่ถูกสิงอยู่
+        Vector3 dashMovement = currentBodyTransform.forward * ((dashDistance / dashDuration) * force * Time.deltaTime);
 
-        if (controller != null)
+        if (currentController != null)
         {
-            controller.Move(dashMovement);
+            currentController.Move(dashMovement);
         }
     }
 
@@ -144,7 +175,11 @@ public class PlayerCombat : MonoBehaviour
         if (currentComboFinishCooldownTimer > 0f) return;
 
         // Guard Clause 4: ต้องอยู่บนพื้นเท่านั้น (Grounded Check)
-        if (!IsGrounded()) return;
+        if (!IsGrounded())
+        {
+            Debug.Log($"[PlayerCombat] ตีไม่ได้! ตัวละครไม่ได้อยู่บนพื้น (isGrounded = false)");
+            return;
+        }
 
         // เมื่อผ่านทุก Guard Clauses หมายความว่าพร้อมโจมตี
         ExecuteAttack();
@@ -155,6 +190,8 @@ public class PlayerCombat : MonoBehaviour
     /// </summary>
     private void ExecuteAttack()
     {
+        Debug.Log($"[PlayerCombat] ⚔️ เริ่มการโจมตี! (Combo Step: {currentComboStep + 1})");
+
         // ล้างค่า Buffer เป็น 0 ทันทีที่ถูกนำมาใช้งาน
         currentBufferTimer = 0f;
 
@@ -176,8 +213,8 @@ public class PlayerCombat : MonoBehaviour
         currentComboStep++;
 
         // ส่งค่าไปให้ Animator ทำงานตาม Step ปัจจุบัน
-        animator.SetInteger(hashComboStep, currentComboStep);
-        animator.SetTrigger(hashAttack);
+        currentAnimator.SetInteger(hashComboStep, currentComboStep);
+        currentAnimator.SetTrigger(hashAttack);
 
         // ตรวจสอบว่าจบคอมโบ (Max Combo) แล้วหรือยัง
         if (currentComboStep >= maxComboStep)
@@ -207,15 +244,15 @@ public class PlayerCombat : MonoBehaviour
     private void RotateTowardsTarget()
     {
         // Guard Clause: ถ้าไม่ได้เปิดระบบหรือไม่มี Target ให้ข้ามไป
-        if (targetDetector == null || targetDetector.CurrentTarget == null) return;
+        if (targetDetector == null || targetDetector.CurrentTarget == null || currentBodyTransform == null) return;
 
-        Vector3 directionToTarget = targetDetector.CurrentTarget.transform.position - transform.position;
+        Vector3 directionToTarget = targetDetector.CurrentTarget.transform.position - currentBodyTransform.position;
         directionToTarget.y = 0f; // ล็อกแกน Y ไว้เพื่อไม่ให้ตัวละครก้มหรือเงย
 
         // ถ้าเป้าหมายไม่ได้อยู่จุดเดียวกับตัวละคร (ป้องกัน Error จาก LookRotation)
         if (directionToTarget.sqrMagnitude > 0.001f)
         {
-            transform.rotation = Quaternion.LookRotation(directionToTarget);
+            currentBodyTransform.rotation = Quaternion.LookRotation(directionToTarget);
         }
     }
 
@@ -236,7 +273,7 @@ public class PlayerCombat : MonoBehaviour
         // เมื่อปล่อยให้เวลาขาดตอน (หมดเวลา comboTimer)
         // ทำการรีเซ็ตคอมโบเป็น 0
         currentComboStep = 0;
-        animator.SetInteger(hashComboStep, 0);
+        currentAnimator.SetInteger(hashComboStep, 0);
 
         // ถ้าไม่ใช่การตีครบ Max Combo แล้วปล่อยเวลาหมด (คือตีพลาด/ขาดตอน) ให้ติดคูลดาวน์ทำโทษ
         if (!isMaxComboFinish)
@@ -250,13 +287,15 @@ public class PlayerCombat : MonoBehaviour
     /// </summary>
     public void AE_TriggerWeaponAttack()
     {
+        Debug.Log($"[PlayerCombat] เรียก AE_TriggerWeaponAttack! (จำนวน Hitbox: {(currentWeaponHitboxes != null ? currentWeaponHitboxes.Length : 0)})");
+
         // Guard Clause: ถ้าไม่ได้ใส่ Hitbox ไว้เลย ให้ข้ามไป
-        if (weaponHitboxes == null || weaponHitboxes.Length == 0) return;
+        if (currentWeaponHitboxes == null || currentWeaponHitboxes.Length == 0) return;
 
         // วนลูปสั่งโจมตีทุก Hitbox ที่มีอยู่ใน Array (Zero GC ด้วย for loop)
-        for (int i = 0; i < weaponHitboxes.Length; i++)
+        for (int i = 0; i < currentWeaponHitboxes.Length; i++)
         {
-            if (weaponHitboxes[i] != null) weaponHitboxes[i].PerformAttack();
+            if (currentWeaponHitboxes[i] != null) currentWeaponHitboxes[i].PerformAttack();
         }
     }
 
@@ -267,7 +306,7 @@ public class PlayerCombat : MonoBehaviour
     private bool IsGrounded()
     {
         // ปรับแก้บรรทัดนี้ตามโครงสร้างของโปรเจกต์ของคุณ (เช่นอ้างอิงจากตัวแปร Ground Check ของ PlayerMovement)
-        if (controller != null) return controller.isGrounded;
+        if (currentController != null) return currentController.isGrounded;
         
         return true; // สำรองไว้ในกรณีที่ไม่ได้ใส่ Controller ให้ตีได้ตลอด
     }

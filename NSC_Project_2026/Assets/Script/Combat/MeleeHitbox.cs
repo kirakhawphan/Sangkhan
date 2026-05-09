@@ -24,6 +24,7 @@ public class MeleeHitbox : MonoBehaviour
         // ใช้ OverlapSphereNonAlloc แทน OverlapSphere ธรรมดา
         // คำสั่งนี้จะนำผลลัพธ์ไปใส่ไว้ใน hitResults (ที่เราจองพื้นที่ไว้แล้ว) และคืนค่าจำนวนที่โดนจริงๆ กลับมา
         int hitCount = Physics.OverlapSphereNonAlloc(attackPoint.position, attackRadius, hitResults, targetLayer);
+        Debug.Log($"[MeleeHitbox] '{gameObject.name}' ตรวจพบ Collider ในระยะ {hitCount} ชิ้น (ค้นหาใน Layer: {targetLayer.value})");
 
         // วนลูปตรวจสอบเฉพาะ object ที่ถูกโจมตีจริงๆ (ตามจำนวน hitCount)
         for (int i = 0; i < hitCount; i++)
@@ -31,11 +32,15 @@ public class MeleeHitbox : MonoBehaviour
             Collider col = hitResults[i];
 
             // ค้นหา IDamageable ในตัว Object นั้นๆ รวมถึงใน Parent ด้วย
-            // (ช่วยให้ไม่ต้องผูกมัดว่า Collider กับ Script ต้องอยู่ก้อนเดียวกันเสมอไป)
-            IDamageable damageable = col.GetComponentInParent<IDamageable>();
+            IDamageable targetDamageable = col.GetComponentInParent<IDamageable>();
+            IDamageable myDamageable = GetComponentInParent<IDamageable>();
 
-            if (damageable != null)
+            Debug.Log($"   -> ตรวจสอบ: '{col.gameObject.name}' | เจอเป้าหมาย: {(targetDamageable != null)} | ตีตัวเองไหม?: {(targetDamageable == myDamageable)}");
+
+            // เช็คว่าเจอเป้าหมาย และเป้าหมายนั้นต้อง 'ไม่ใช่' ตัวเราเอง (เทียบจาก IDamageable)
+            if (targetDamageable != null && targetDamageable != myDamageable)
             {
+                Debug.Log($"   => ฟันเข้าเป้า! ส่งดาเมจไปที่ '{col.gameObject.name}'");
                 // [แก้] คำนวณทิศทางการกระเด็น และบังคับให้อยู่ในแนวนอน (y = 0) ป้องกันแรงกดลงพื้น
                 Vector3 knockbackDir = col.transform.position - transform.position;
                 knockbackDir.y = 0;
@@ -52,7 +57,7 @@ public class MeleeHitbox : MonoBehaviour
                 };
 
                 // ส่งคำสั่ง TakeDamage ให้กับเป้าหมายที่ถูกตี
-                damageable.TakeDamage(info);
+                targetDamageable.TakeDamage(info);
             }
         }
     }
@@ -65,5 +70,11 @@ public class MeleeHitbox : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
         }
+    }
+
+    // [เพิ่ม] อนุญาตให้ระบบ Possession เปลี่ยนเป้าหมายการโจมตีได้
+    public void SetTargetLayer(LayerMask newLayer)
+    {
+        targetLayer = newLayer;
     }
 }
