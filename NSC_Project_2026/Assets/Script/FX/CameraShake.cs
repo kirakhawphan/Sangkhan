@@ -8,6 +8,14 @@ using UnityEngine;
 // แล้วให้ Playermovement บวกเพิ่มตอนเซ็ตกล้องใน LateUpdate → ไม่มีปัญหา Execution Order
 public class CameraShake : MonoBehaviour
 {
+    public static CameraShake Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+
     [Header("Shake Settings")]
     [Tooltip("ความแรงของการสั่น (ยิ่งมากยิ่งสั่นแรง)")]
     [SerializeField] private float shakeIntensity = 0.15f;
@@ -103,7 +111,7 @@ public class CameraShake : MonoBehaviour
 
     // ==================== Shake Logic ====================
 
-    private void TriggerShake()
+    public void TriggerShake(float customIntensity = 0f, float customDuration = 0f)
     {
         // ต้องมี Playermovement เป้าหมายก่อนถึงจะสั่นได้
         if (targetPlayermovement == null) return;
@@ -113,18 +121,21 @@ public class CameraShake : MonoBehaviour
             StopCoroutine(shakeCoroutine);
         }
 
-        shakeCoroutine = StartCoroutine(ShakeRoutine());
+        float finalIntensity = customIntensity > 0f ? customIntensity : shakeIntensity;
+        float finalDuration = customDuration > 0f ? customDuration : shakeDuration;
+
+        shakeCoroutine = StartCoroutine(ShakeRoutine(finalIntensity, finalDuration));
     }
 
-    private IEnumerator ShakeRoutine()
+    private IEnumerator ShakeRoutine(float intensity, float duration)
     {
         float elapsed = 0f;
 
-        while (elapsed < shakeDuration)
+        while (elapsed < duration)
         {
             // คำนวณ offset สั่น — ความแรงค่อยๆ ลดลงตามเวลา
-            float remainingRatio = 1f - (elapsed / shakeDuration);
-            float currentIntensity = shakeIntensity * remainingRatio;
+            float remainingRatio = 1f - (elapsed / duration);
+            float currentIntensity = intensity * remainingRatio;
 
             // เขียน offset ลงใน Playermovement → มันจะบวกเพิ่มตอนเซ็ตกล้องเอง
             if (targetPlayermovement != null)
@@ -136,7 +147,8 @@ public class CameraShake : MonoBehaviour
                 );
             }
 
-            elapsed += Time.deltaTime;
+            // [Game Feel] ใช้ unscaledDeltaTime เพื่อให้กล้องยังสั่นเร็วปกติแม้เวลาในเกมหยุด (Hit Stop)
+            elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 

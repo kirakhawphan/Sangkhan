@@ -825,9 +825,6 @@ MonoBehaviour:
   attackDamage: 20
   poiseDamage: 20
   knockbackPower: 5
-  hitStopDuration: 0.08
-  hitShakeIntensity: 0.25
-  hitShakeDuration: 0.15
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1828,7 +1825,6 @@ MonoBehaviour:
   comboFinishCooldown: 1.5
   normalAttackLockTime: 0.5
   finishAttackLockTime: 1
-  missRecoveryPenalty: 0.2
   dashCurve:
     serializedVersion: 2
     m_Curve:
@@ -2709,9 +2705,6 @@ MonoBehaviour:
   attackDamage: 20
   poiseDamage: 20
   knockbackPower: 5
-  hitStopDuration: 0.08
-  hitShakeIntensity: 0.25
-  hitShakeDuration: 0.15
 --- !u!1 &1809364619
 GameObject:
   m_ObjectHideFlags: 0
@@ -2753,7 +2746,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1821828769}
   - component: {fileID: 1821828768}
-  - component: {fileID: 1821828770}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -2804,18 +2796,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1821828770
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1821828767}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16d4a189c76ab1146bb799e5b49d1aaf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ImpactManager
 --- !u!1 &1874737086
 GameObject:
   m_ObjectHideFlags: 0
@@ -3138,7 +3118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SimpleKnockback
   health: {fileID: 2073900286}
-  animator: {fileID: 2073900293}
+  animator: {fileID: 0}
 --- !u!114 &2073900295
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3176,34 +3156,10 @@ PrefabInstance:
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 330585546}
-    - target: {fileID: 2428073808891550360, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: hitStopDuration
-      value: 0.08
-      objectReference: {fileID: 0}
-    - target: {fileID: 2428073808891550360, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: hitShakeDuration
-      value: 0.1
-      objectReference: {fileID: 0}
     - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: aimOrigin
       value: 
       objectReference: {fileID: 330585546}
-    - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: missRecoveryPenalty
-      value: 0.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: finishAttackLockTime
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: targetDetector.detectionMode
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
-      propertyPath: targetDetector.maxDetectionDistance
-      value: 15
-      objectReference: {fileID: 0}
     - target: {fileID: 7251126261850163335, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: m_Name
       value: Player

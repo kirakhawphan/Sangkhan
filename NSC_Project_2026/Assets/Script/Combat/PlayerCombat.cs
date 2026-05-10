@@ -15,6 +15,9 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private float normalAttackLockTime = 0.3f; // ระยะเวลาล็อกการเดินท่าปกติ
     [SerializeField] private float finishAttackLockTime = 0.6f; // ระยะเวลาล็อกการเดินเฉพาะท่าจบคอมโบ
 
+    [Header("Miss Penalty")]
+    [SerializeField] private float missRecoveryPenalty = 0.2f; // ระยะเวลาหน่วงเพิ่มเมื่อโจมตีพลาด (Recovery Frame)
+
     [Header("Attack Dash")]
     [SerializeField] private AnimationCurve dashCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f)); // กราฟปรับความเร็ว
     [SerializeField] private float dashDistance = 2f; // ระยะทางรวมที่ต้องการให้พุ่ง
@@ -298,10 +301,32 @@ public class PlayerCombat : MonoBehaviour
         // Guard Clause: ถ้าไม่ได้ใส่ Hitbox ไว้เลย ให้ข้ามไป
         if (currentWeaponHitboxes == null || currentWeaponHitboxes.Length == 0) return;
 
+        bool anyHit = false;
+
         // วนลูปสั่งโจมตีทุก Hitbox ที่มีอยู่ใน Array (Zero GC ด้วย for loop)
         for (int i = 0; i < currentWeaponHitboxes.Length; i++)
         {
-            if (currentWeaponHitboxes[i] != null) currentWeaponHitboxes[i].PerformAttack();
+            if (currentWeaponHitboxes[i] != null)
+            {
+                if (currentWeaponHitboxes[i].PerformAttack())
+                {
+                    anyHit = true;
+                }
+            }
+        }
+
+        // ถ้ายิง Hitbox ไปแล้วไม่โดนใครเลย ให้ทำโทษเรื่อง Recovery Frame
+        if (!anyHit)
+        {
+            Debug.Log("[PlayerCombat] ⚠️ โจมตีพลาดเป้า! (Miss) เพิ่ม Recovery Time...");
+            currentMovementLockTimer += missRecoveryPenalty;
+            currentAttackCooldownTimer += missRecoveryPenalty;
+            
+            // ถ้าเป็นท่าจบคอมโบ ให้บวกคูลดาวน์จบคอมโบด้วย
+            if (currentComboStep >= maxComboStep)
+            {
+                currentComboFinishCooldownTimer += missRecoveryPenalty;
+            }
         }
     }
 
