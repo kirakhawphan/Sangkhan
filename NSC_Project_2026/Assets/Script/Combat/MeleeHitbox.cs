@@ -21,6 +21,14 @@ public class MeleeHitbox : MonoBehaviour
     // Strict Rule: จอง Array ล่วงหน้า เพื่อป้องกัน GC Allocation ที่เกิดจากการสร้าง Array ใหม่ทุกครั้งที่โจมตี
     private readonly Collider[] hitResults = new Collider[10];
 
+    // แคชเอาไว้ล่วงหน้าเพื่อหลีกเลี่ยงการดึงใหม่ทุกครั้งใน Loop (Zero GC)
+    private IDamageable myDamageable;
+
+    private void Awake()
+    {
+        myDamageable = GetComponentInParent<IDamageable>();
+    }
+
     // ฟังก์ชันนี้ถูกเรียกเมื่อเราทำการโจมตี (อาจเรียกผ่าน Animation Event, State Machine หรือ Input)
     public bool PerformAttack()
     {
@@ -29,7 +37,9 @@ public class MeleeHitbox : MonoBehaviour
         // ใช้ OverlapSphereNonAlloc แทน OverlapSphere ธรรมดา
         // คำสั่งนี้จะนำผลลัพธ์ไปใส่ไว้ใน hitResults (ที่เราจองพื้นที่ไว้แล้ว) และคืนค่าจำนวนที่โดนจริงๆ กลับมา
         int hitCount = Physics.OverlapSphereNonAlloc(attackPoint.position, attackRadius, hitResults, targetLayer);
+#if UNITY_EDITOR
         Debug.Log($"[MeleeHitbox] '{gameObject.name}' ตรวจพบ Collider ในระยะ {hitCount} ชิ้น (ค้นหาใน Layer: {targetLayer.value})");
+#endif
 
         bool hasHitTarget = false;
 
@@ -40,15 +50,19 @@ public class MeleeHitbox : MonoBehaviour
 
             // ค้นหา IDamageable ในตัว Object นั้นๆ รวมถึงใน Parent ด้วย
             IDamageable targetDamageable = col.GetComponentInParent<IDamageable>();
-            IDamageable myDamageable = GetComponentInParent<IDamageable>();
+            // myDamageable ถูกเรียกใช้งานจากของที่ Cache ไว้แล้ว (ไม่ต้อง GetComponentInParent ซ้ำซ้อน)
 
+#if UNITY_EDITOR
             Debug.Log($"   -> ตรวจสอบ: '{col.gameObject.name}' | เจอเป้าหมาย: {(targetDamageable != null)} | ตีตัวเองไหม?: {(targetDamageable == myDamageable)}");
+#endif
 
             // เช็คว่าเจอเป้าหมาย และเป้าหมายนั้นต้อง 'ไม่ใช่' ตัวเราเอง (เทียบจาก IDamageable)
             if (targetDamageable != null && targetDamageable != myDamageable)
             {
                 hasHitTarget = true;
+#if UNITY_EDITOR
                 Debug.Log($"   => ฟันเข้าเป้า! ส่งดาเมจไปที่ '{col.gameObject.name}'");
+#endif
 
                 // [Game Feel] สั่งหยุดเวลา (Hit Stop) ตามค่าที่ตั้งไว้
                 if (ImpactManager.Instance != null && hitStopDuration > 0f)

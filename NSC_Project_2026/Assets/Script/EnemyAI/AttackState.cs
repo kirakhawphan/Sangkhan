@@ -52,7 +52,7 @@ public class AttackState : IEnemyState
         // เมื่อเวลาผ่านไปจนจบแอนิเมชัน ให้กลับไปไล่ล่าต่อ
         if (Time.time >= exitTime)
         {
-            brain.ChangeState(new ChaseState(brain));
+            brain.ChangeState(brain.chaseState);
         }
     }
 

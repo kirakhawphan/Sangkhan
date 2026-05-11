@@ -51,7 +51,9 @@ public class EnemyCombat : MonoBehaviour
     {
         if (!CanAttack()) return;
 
+#if UNITY_EDITOR
         Debug.Log($"[EnemyCombat] {gameObject.name} is performing attack!");
+#endif
         
         // ล็อกการเดิน (อิงจากท่าที่กำลังตี ถ้าเป็นท่า 3 ให้ล็อกนานขึ้น)
         if (comboStep >= 3)

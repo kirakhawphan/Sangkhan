@@ -32,7 +32,7 @@ public class StunnedState : IEnemyState
         if (timer < stunDuration) return;
 
         // หมดเวลาชะงัก กลับไปสถานะ Idle
-        brain.ChangeState(new IdleState(brain));
+        brain.ChangeState(brain.idleState);
     }
 
     public void Exit()

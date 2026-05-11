@@ -30,7 +30,7 @@ public class IdleState : IEnemyState
         if (brain.targetDetector.CurrentTarget != null)
         {
             // ถ้าเจอเป้าหมาย ให้สั่งสมองเปลี่ยนเป็นสถานะวิ่งไล่ตาม!
-            brain.ChangeState(new ChaseState(brain));
+            brain.ChangeState(brain.chaseState);
         }
     }
 

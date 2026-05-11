@@ -15,8 +15,8 @@ public class HealthBarUI : MonoBehaviour
     [Tooltip("ความเร็วในการไหลของหลอดเลือด (Smooth Drain)")]
     [SerializeField] private float smoothDrainSpeed = 5f;
 
-    // เก็บตัวแปร Coroutine เพื่อใช้ในการหยุดการทำงานเมื่อมีค่าเลือดอัปเดตซ้อนกัน
-    private Coroutine smoothDrainCoroutine;
+    // เป้าหมายของหลอดเลือดที่ต้องการจะ Lerp ไปหา
+    private float targetPercentage = 1f;
 
     private void OnEnable()
     {
@@ -63,13 +63,8 @@ public class HealthBarUI : MonoBehaviour
             targetHealthSystem.OnHealthChanged -= HandleHealthChanged;
         }
 
-        // --- ขั้นตอนที่ 2: หยุด Coroutine Smooth Drain ที่ค้างอยู่ ---
-        // ป้องกันไม่ให้ Animation หลอดเลือดของร่างเก่ายังไหลอยู่
-        if (smoothDrainCoroutine != null)
-        {
-            StopCoroutine(smoothDrainCoroutine);
-            smoothDrainCoroutine = null;
-        }
+        // --- ขั้นตอนที่ 2: ยกเลิกระบบ Smooth Drain เดิม ---
+        // ไม่จำเป็นต้องปิด Coroutine แล้ว แค่เซ็ตเป้าหมายใหม่แทน
 
         // --- ขั้นตอนที่ 3: เปลี่ยนเป้าหมายเป็นตัวใหม่ ---
         targetHealthSystem = newHealthSystem;
@@ -94,36 +89,23 @@ public class HealthBarUI : MonoBehaviour
     /// <param name="healthPercentage">ค่าเลือดที่รับมาอยู่ในช่วง 0.0 - 1.0</param>
     private void HandleHealthChanged(float healthPercentage)
     {
-        // หากมี Animation หลอดเลือดอันเก่าที่กำลังไหลอยู่ ให้หยุดก่อน
-        if (smoothDrainCoroutine != null)
-        {
-            StopCoroutine(smoothDrainCoroutine);
-        }
-
-        // เริ่ม Animation การไหลของหลอดเลือดไปหาค่าเป้าหมายใหม่
-        smoothDrainCoroutine = StartCoroutine(SmoothDrainRoutine(healthPercentage));
+        // เซ็ตเป้าหมายใหม่ให้ Update() จัดการต่อ (Zero GC)
+        targetPercentage = healthPercentage;
     }
 
-    /// <summary>
-    /// Coroutine สำหรับการปรับเปลี่ยนหลอดเลือดอย่างนุ่มนวล (Smooth Drain Effect)
-    /// </summary>
-    /// <param name="targetPercentage">ค่าเปอร์เซ็นต์เป้าหมายที่หลอดเลือดต้องไปถึง</param>
-    private IEnumerator SmoothDrainRoutine(float targetPercentage)
+    private void Update()
     {
-        // ตรวจสอบว่ายังมี healthFillImage อยู่หรือไม่
-        if (healthFillImage == null) yield break;
+        if (healthFillImage == null) return;
 
-        // วนลูปทำงานตราบใดที่ค่า fillAmount ยังไม่เข้าใกล้เป้าหมาย (ใช้ค่าคลาดเคลื่อน 0.001f ป้องกันลูปไม่จบ)
-        while (Mathf.Abs(healthFillImage.fillAmount - targetPercentage) > 0.001f)
+        // วนทำงานใน Update แทน Coroutine เพื่อประหยัด Garbage
+        if (Mathf.Abs(healthFillImage.fillAmount - targetPercentage) > 0.001f)
         {
-            // ใช้ Mathf.Lerp เพื่อค่อยๆ เลื่อนค่า fillAmount ปัจจุบันไปหาเป้าหมายอย่างนุ่มนวล
             healthFillImage.fillAmount = Mathf.Lerp(healthFillImage.fillAmount, targetPercentage, Time.deltaTime * smoothDrainSpeed);
-            
-            // รอให้ถึงเฟรมถัดไปแล้วค่อยทำลูปต่อ
-            yield return null;
         }
-
-        // เมื่อค่าเข้าใกล้มากๆ แล้ว ให้เซ็ตเป็นค่าเป้าหมายพอดีเพื่อความแม่นยำ
-        healthFillImage.fillAmount = targetPercentage;
+        else
+        {
+            // ป้องกันการ Lerp ค้างไม่จบ
+            healthFillImage.fillAmount = targetPercentage;
+        }
     }
 }

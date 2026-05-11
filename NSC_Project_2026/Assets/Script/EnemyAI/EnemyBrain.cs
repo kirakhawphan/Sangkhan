@@ -24,7 +24,13 @@ public class EnemyBrain : MonoBehaviour
 
     [Header("Stagger Settings")]
     [Tooltip("ระยะเวลาชะงัก (วินาที) ก่อนกลับมาทำงานต่อ")]
-    [SerializeField] private float stunDuration = 0.8f;
+    public float stunDuration = 0.8f; // Changed to public to allow StunnedState to read it if needed, or pass it directly.
+
+    // --- Cached States (Zero GC) ---
+    public IdleState idleState { get; private set; }
+    public ChaseState chaseState { get; private set; }
+    public AttackState attackState { get; private set; }
+    public StunnedState stunnedState { get; private set; }
 
     // สถานะปัจจุบันที่ AI กำลังเป็นอยู่
     private IEnemyState currentState;
@@ -32,11 +38,19 @@ public class EnemyBrain : MonoBehaviour
     // [เพิ่ม] เปิดให้คลาสอื่นเช็คสถานะปัจจุบันได้
     public IEnemyState CurrentState => currentState;
 
+    private void Awake()
+    {
+        // จอง Memory แค่ครั้งเดียวตอนเริ่มเกม (Zero GC Pattern)
+        idleState = new IdleState(this);
+        chaseState = new ChaseState(this);
+        attackState = new AttackState(this);
+        stunnedState = new StunnedState(this, stunDuration);
+    }
+
     private void Start()
     {
-        // เมื่อเริ่มเกม ให้ AI เข้าสู่สถานะ Idle เป็นค่าเริ่มต้น
-        // เราส่ง this (ตัวสมองเอง) ไปให้ State เพื่อให้ State ดึงอวัยวะไปใช้ได้
-        ChangeState(new IdleState(this));
+        // เมื่อเริ่มเกม ให้ AI เข้าสู่สถานะ Idle โดยใช้ค่าที่จองไว้
+        ChangeState(idleState);
     }
 
     // [เพิ่ม] สมัครรับ Event จาก HealthSystem เมื่อเปิดใช้งาน
@@ -111,7 +125,7 @@ public class EnemyBrain : MonoBehaviour
         if (movement != null) movement.ApplyKnockback(knockbackForce);
 
         // เปลี่ยน State เป็น Stunned เพื่อหยุด AI ไม่ให้สั่ง MoveTo ทับ velocity ของ knockback
-        ChangeState(new StunnedState(this, stunDuration));
+        ChangeState(stunnedState);
     }
 
     // [เพิ่ม] เมื่อตาย สั่งเล่นแอนิเมชันตาย

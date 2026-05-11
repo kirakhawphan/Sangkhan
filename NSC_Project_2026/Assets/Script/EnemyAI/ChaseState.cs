@@ -25,7 +25,7 @@ public class ChaseState : IEnemyState
         if (brain.targetDetector == null || brain.targetDetector.CurrentTarget == null)
         {
             // ถ้าเป้าหมายหลุดระยะ หรือถูกลบออกไป ให้กลับไปสถานะ Idle
-            brain.ChangeState(new IdleState(brain));
+            brain.ChangeState(brain.idleState);
             return;
         }
 
@@ -47,7 +47,7 @@ public class ChaseState : IEnemyState
 
             if (isCloseEnough && isNearStoppingPoint)
             {
-                brain.ChangeState(new AttackState(brain));
+                brain.ChangeState(brain.attackState);
             }
         }
     }
