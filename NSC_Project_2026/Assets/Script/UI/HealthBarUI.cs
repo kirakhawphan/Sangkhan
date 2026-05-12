@@ -76,9 +76,13 @@ public class HealthBarUI : MonoBehaviour
 
             // --- ขั้นตอนที่ 5: อัปเดตหลอดเลือดทันที (Snap) ไม่ต้องรอ Smooth ---
             // ใช้ Property เพื่อดึงค่า % เลือดปัจจุบันของร่างใหม่
+            // [แก้บั๊ก] ต้องอัปเดต targetPercentage ด้วย ไม่งั้น Update() จะ Lerp กลับไปค่าเลือดร่างเก่า!
+            float newPercentage = targetHealthSystem.CurrentHealthPercentage;
+            targetPercentage = newPercentage;
+
             if (healthFillImage != null)
             {
-                healthFillImage.fillAmount = targetHealthSystem.CurrentHealthPercentage;
+                healthFillImage.fillAmount = newPercentage;
             }
         }
     }
