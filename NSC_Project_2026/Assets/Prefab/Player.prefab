@@ -52,6 +52,9 @@ MonoBehaviour:
   attackDamage: 20
   poiseDamage: 20
   knockbackPower: 5
+  hitStopDuration: 0.08
+  hitShakeIntensity: 0.25
+  hitShakeDuration: 0.1
 --- !u!1 &1252065202740720298
 GameObject:
   m_ObjectHideFlags: 0
@@ -104,6 +107,9 @@ MonoBehaviour:
   attackDamage: 20
   poiseDamage: 20
   knockbackPower: 5
+  hitStopDuration: 0.08
+  hitShakeIntensity: 0.25
+  hitShakeDuration: 0.15
 --- !u!1 &4366875147775562347
 GameObject:
   m_ObjectHideFlags: 0
@@ -391,6 +397,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5086073195683201866}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4073640708558367047}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3445951891923154819}
   m_SourcePrefab: {fileID: 100100000, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
 --- !u!4 &981633286492894742 stripped
 Transform:
@@ -531,7 +543,8 @@ MonoBehaviour:
   comboResetTime: 0.7
   comboFinishCooldown: 2
   normalAttackLockTime: 0.5
-  finishAttackLockTime: 1
+  finishAttackLockTime: 0.5
+  missRecoveryPenalty: 0.2
   dashCurve:
     serializedVersion: 2
     m_Curve:
@@ -567,6 +580,45 @@ MonoBehaviour:
       m_Bits: 512
     scanInterval: 0.2
   aimOrigin: {fileID: 0}
+--- !u!114 &4073640708558367047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7251126261850163335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55fafba145e0ef546a97e696fa80e748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleKnockback
+  health: {fileID: 6154281769769633594}
+  animator: {fileID: 4110326939117963335}
+--- !u!114 &3445951891923154819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7251126261850163335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ccac5ce064798b4bb1009d94349c646, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyBrain
+  movement: {fileID: 0}
+  targetDetector:
+    detectionMode: 1
+    maxDetectionDistance: 0
+    aimRadius: 0
+    targetLayer:
+      serializedVersion: 2
+      m_Bits: 0
+    scanInterval: 0.2
+  combat: {fileID: 0}
+  health: {fileID: 6154281769769633594}
+  animator: {fileID: 4110326939117963335}
+  stunDuration: 0.8
 --- !u!4 &8064535461842227773 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
