@@ -14,42 +14,128 @@ public class DamageZone : MonoBehaviour
     [Tooltip("ประเภทดาเมจ (Combat = สั่นกล้อง, System = ไม่สั่น, Poison = พิษ)")]
     [SerializeField] private DamageType damageType = DamageType.System;
 
-    // ตัวจับเวลาภายใน เพื่อควบคุมว่าจะโดนดาเมจทุกกี่วินาที
-    private float tickTimer;
+    // คลาสสำหรับเก็บเป้าหมายและเวลาแยกกันแต่ละตัวละคร (Zero GC/Optimized)
+    private class TargetInZone
+    {
+        public IDamageable Target;
+        public float Timer;
+        public int ColliderCount;
+        public Collider RepresentativeCollider;
+    }
+
+    private readonly System.Collections.Generic.List<TargetInZone> targetsInZone = new System.Collections.Generic.List<TargetInZone>();
+
+    private void Update()
+    {
+        float dt = Time.deltaTime;
+
+        // วนลูปนับเวลาถอยหลังแต่ละเป้าหมายแยกกัน (วนถอยหลังเพื่อความปลอดภัยในการลบข้อมูลหากเป้าหมายถูกทำลาย)
+        for (int i = targetsInZone.Count - 1; i >= 0; i--)
+        {
+            TargetInZone entry = targetsInZone[i];
+
+            // ป้องกันกรณีเป้าหมายถูกลบหรือทำลายกลางอากาศ (Safety check)
+            if (entry.Target == null || (entry.Target as Component) == null)
+            {
+                targetsInZone.RemoveAt(i);
+                continue;
+            }
+
+            entry.Timer -= dt;
+
+            if (entry.Timer <= 0f)
+            {
+                TryDealDamage(entry.Target, entry.RepresentativeCollider);
+                entry.Timer = tickInterval; // รีเซ็ตเวลาคูลดาวน์ดาเมจเฉพาะตัว
+            }
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
-        // โดนทันทีเมื่อเหยียบเข้ามา ไม่ต้องรอ Tick แรก
-        TryDealDamage(other);
-        tickTimer = tickInterval; // รีเซ็ตตัวจับเวลา
+        IDamageable target = other.GetComponentInParent<IDamageable>();
+        if (target == null) return;
+
+        // ค้นหาเป้าหมายเดิมใน List
+        TargetInZone existingEntry = null;
+        for (int i = 0; i < targetsInZone.Count; i++)
+        {
+            if (targetsInZone[i].Target == target)
+            {
+                existingEntry = targetsInZone[i];
+                break;
+            }
+        }
+
+        if (existingEntry != null)
+        {
+            // หากเป้าหมายมี Collider อื่นเข้ามาก่อนแล้ว ให้เพิ่มจำนวนการนับ Collider เฉยๆ (ป้องกันดาเมจเบิ้ล)
+            existingEntry.ColliderCount++;
+        }
+        else
+        {
+            // โดนทันทีเมื่อก้าวเหยียบเข้ามาในโซนรอบแรก
+            TryDealDamage(target, other);
+
+            // บันทึกเป้าหมายใหม่ลง List
+            TargetInZone newEntry = new TargetInZone
+            {
+                Target = target,
+                Timer = tickInterval,
+                ColliderCount = 1,
+                RepresentativeCollider = other
+            };
+            targetsInZone.Add(newEntry);
+        }
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerExit(Collider other)
     {
-        // นับเวลาลง
-        tickTimer -= Time.deltaTime;
+        IDamageable target = other.GetComponentInParent<IDamageable>();
+        if (target == null) return;
 
-        if (tickTimer <= 0f)
+        // ค้นหาเป้าหมายใน List
+        TargetInZone existingEntry = null;
+        int index = -1;
+        for (int i = 0; i < targetsInZone.Count; i++)
         {
-            TryDealDamage(other);
-            tickTimer = tickInterval; // รีเซ็ตหลังจากยิงดาเมจ
+            if (targetsInZone[i].Target == target)
+            {
+                existingEntry = targetsInZone[i];
+                index = i;
+                break;
+            }
+        }
+
+        if (existingEntry != null)
+        {
+            existingEntry.ColliderCount--;
+
+            // หากไม่เหลือ Collider ใดๆ ของตัวนี้ในโซนแล้ว ให้ลบออกจาก List
+            if (existingEntry.ColliderCount <= 0)
+            {
+                targetsInZone.RemoveAt(index);
+            }
+            else if (existingEntry.RepresentativeCollider == other)
+            {
+                // หาก Collider ที่ใช้เป็นตัวแทนออกไป แต่ยังมี Collider อื่นอยู่ ให้ใช้ตัวอื่นทดแทน (Safety fallback)
+                existingEntry.RepresentativeCollider = (target as Component).GetComponentInChildren<Collider>();
+            }
         }
     }
 
     /// <summary>
     /// พยายามส่งดาเมจไปยังเป้าหมายที่อยู่ในโซน
-    /// ใช้ GetComponentInParent เพื่อรองรับกรณี Collider อยู่บน Child Object
     /// </summary>
-    private void TryDealDamage(Collider other)
+    private void TryDealDamage(IDamageable target, Collider other)
     {
-        IDamageable target = other.GetComponentInParent<IDamageable>();
         if (target == null) return;
 
         DamageInfo info = new DamageInfo
         {
             damageAmount = damagePerTick,
             damageType = this.damageType, // ใช้ค่าจาก Inspector
-            hitPoint = other.ClosestPoint(transform.position),
+            hitPoint = other != null ? other.ClosestPoint(transform.position) : transform.position,
             knockbackForce = Vector3.zero, // พื้นไม่มีแรงกระเด็น
             attacker = gameObject
         };

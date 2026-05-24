@@ -127,7 +127,22 @@ public class Playermovement : MonoBehaviour
     {
         Vector3 targetPosition = cameraTarget != null ? cameraTarget.position : (transform.position + targetOffset);
         Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
-        destPosition = targetPosition - (rotation * Vector3.forward * distance);
+        Vector3 direction = rotation * Vector3.forward;
+        Vector3 desiredCameraPos = targetPosition - (direction * distance);
+
+        // ระบบชนกำแพง: ยิง SphereCast เพื่อเช็คสิ่งกีดขวางในเลเยอร์ groundMask
+        float checkRadius = 0.2f;
+        Vector3 castDirection = -direction;
+
+        if (Physics.SphereCast(targetPosition, checkRadius, castDirection, out RaycastHit hit, distance, groundMask))
+        {
+            destPosition = targetPosition + castDirection * Mathf.Max(0.2f, hit.distance - 0.05f);
+        }
+        else
+        {
+            destPosition = desiredCameraPos;
+        }
+
         destRotation = rotation;
     }
 
@@ -188,8 +203,24 @@ public class Playermovement : MonoBehaviour
         
         // ใช้ Quaternion.Euler สร้าง Rotation ชั่วคราว (Struct ไม่มีผลต่อ GC)
         Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
-        
-        cameraTransform.position = targetPosition - (rotation * Vector3.forward * distance) + cameraShakeOffset;
+        Vector3 direction = rotation * Vector3.forward;
+        Vector3 desiredCameraPos = targetPosition - (direction * distance);
+
+        // ระบบชนกำแพง: ป้องกันกล้องคลิปทะลุกำแพงโดยอิงจาก groundMask
+        float checkRadius = 0.2f;
+        Vector3 castDirection = -direction;
+        Vector3 finalCameraPos;
+
+        if (Physics.SphereCast(targetPosition, checkRadius, castDirection, out RaycastHit hit, distance, groundMask))
+        {
+            finalCameraPos = targetPosition + castDirection * Mathf.Max(0.2f, hit.distance - 0.05f);
+        }
+        else
+        {
+            finalCameraPos = desiredCameraPos;
+        }
+
+        cameraTransform.position = finalCameraPos + cameraShakeOffset;
         cameraTransform.rotation = rotation;
     }
 

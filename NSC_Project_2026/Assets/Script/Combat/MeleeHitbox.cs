@@ -21,6 +21,9 @@ public class MeleeHitbox : MonoBehaviour
     // Strict Rule: จอง Array ล่วงหน้า เพื่อป้องกัน GC Allocation ที่เกิดจากการสร้าง Array ใหม่ทุกครั้งที่โจมตี
     private readonly Collider[] hitResults = new Collider[10];
 
+    // แคชเก็บเป้าหมายที่โดนฟันแล้วในเฟรมนี้ เพื่อป้องกันการยิงดาเมจซ้ำกับเป้าหมายเดิม (Zero GC)
+    private readonly System.Collections.Generic.List<IDamageable> damagedTargets = new System.Collections.Generic.List<IDamageable>(10);
+
     // แคชเอาไว้ล่วงหน้าเพื่อหลีกเลี่ยงการดึงใหม่ทุกครั้งใน Loop (Zero GC)
     private IDamageable myDamageable;
 
@@ -33,6 +36,9 @@ public class MeleeHitbox : MonoBehaviour
     public bool PerformAttack()
     {
         if (attackPoint == null) return false;
+
+        // ล้างข้อมูลเป้าหมายที่เคยฟันในรอบนี้ก่อนเริ่ม (Zero GC)
+        damagedTargets.Clear();
 
         // ใช้ OverlapSphereNonAlloc แทน OverlapSphere ธรรมดา
         // คำสั่งนี้จะนำผลลัพธ์ไปใส่ไว้ใน hitResults (ที่เราจองพื้นที่ไว้แล้ว) และคืนค่าจำนวนที่โดนจริงๆ กลับมา
@@ -56,9 +62,11 @@ public class MeleeHitbox : MonoBehaviour
             Debug.Log($"   -> ตรวจสอบ: '{col.gameObject.name}' | เจอเป้าหมาย: {(targetDamageable != null)} | ตีตัวเองไหม?: {(targetDamageable == myDamageable)}");
 #endif
 
-            // เช็คว่าเจอเป้าหมาย และเป้าหมายนั้นต้อง 'ไม่ใช่' ตัวเราเอง (เทียบจาก IDamageable)
-            if (targetDamageable != null && targetDamageable != myDamageable)
+            // เช็คว่าเจอเป้าหมาย และเป้าหมายนั้นต้อง 'ไม่ใช่' ตัวเราเอง และยังไม่เคยถูกโจมตีในการฟันกวาดรอบนี้
+            if (targetDamageable != null && targetDamageable != myDamageable && !damagedTargets.Contains(targetDamageable))
             {
+                // เพิ่มเป้าหมายนี้เข้าไปใน List ป้องกันการโดนซ้ำในเฟรมเดียวกัน
+                damagedTargets.Add(targetDamageable);
                 hasHitTarget = true;
 #if UNITY_EDITOR
                 Debug.Log($"   => ฟันเข้าเป้า! ส่งดาเมจไปที่ '{col.gameObject.name}'");

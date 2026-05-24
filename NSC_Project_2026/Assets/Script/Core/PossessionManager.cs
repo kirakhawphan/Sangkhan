@@ -31,6 +31,10 @@ public class PossessionManager : MonoBehaviour
     [SerializeField, Tooltip("ระบบตรวจจับเป้าหมาย (ตั้งค่าระยะ, รัศมี, Layer ได้ใน Inspector)")]
     private TargetDetector targetDetector;
 
+    // --- Events ---
+    [Tooltip("อีเวนต์เมื่อร่างสิงของผู้เล่นเสียชีวิตลง (สำหรับเกาะไปเขียน Restart/GameOver)")]
+    public event System.Action OnPossessedBodyDeath;
+
     // --- Smooth Camera Transition State ---
     private bool isTransitioning = false;
     private float transitionTimer = 0f;
@@ -53,6 +57,24 @@ public class PossessionManager : MonoBehaviour
             currentBody.SetupCamera(playerCamera.transform);
             currentBody.isPossessed = true;
             currentBody.enabled = true; // มั่นใจว่าเปิดใช้งาน
+        }
+    }
+
+    private void Start()
+    {
+        // สมัครรับข้อมูลความตายสำหรับร่างแรกเริ่ม
+        if (currentBody != null && currentBody.TryGetComponent(out HealthSystem initialHealth))
+        {
+            initialHealth.OnDeath += HandlePossessedBodyDeath;
+        }
+    }
+
+    private void OnDisable()
+    {
+        // ยกเลิกรับข้อมูลความตายเพื่อป้องกัน Memory Leak
+        if (currentBody != null && currentBody.TryGetComponent(out HealthSystem currentHealth))
+        {
+            currentHealth.OnDeath -= HandlePossessedBodyDeath;
         }
     }
 
@@ -156,6 +178,12 @@ public class PossessionManager : MonoBehaviour
             {
                 currentBody.isPossessed = false;
                 currentBody.cameraLocked = false; // ปลดล็อกกล้องตัวเก่า
+
+                // ยกเลิกการดักจับความตายของร่างเก่า
+                if (currentBody.TryGetComponent(out HealthSystem oldHealth))
+                {
+                    oldHealth.OnDeath -= HandlePossessedBodyDeath;
+                }
                 
                 // [เพิ่ม] บังคับปิด PlayerCombat ของร่างเก่าทันที (Safety Net)
                 // ป้องกันกรณี PossessableEntity ไม่ได้ตั้งค่าช่อง PlayerCombat ไว้
@@ -197,6 +225,12 @@ public class PossessionManager : MonoBehaviour
 
             // 6. สลับหลอดเลือด HUD + ระบบสั่นกล้อง ไปยังร่างใหม่
             HealthSystem newHealthSystem = newBody.GetComponent<HealthSystem>();
+
+            if (newHealthSystem != null)
+            {
+                // ดักจับการตายของร่างใหม่
+                newHealthSystem.OnDeath += HandlePossessedBodyDeath;
+            }
 
             if (healthBarUI != null && newHealthSystem != null)
             {
@@ -299,5 +333,39 @@ public class PossessionManager : MonoBehaviour
             Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             targetDetector.DrawGizmos(ray.origin, ray.direction);
         }
+    }
+
+    /// <summary>
+    /// ฟังก์ชันทำงานอัตโนมัติเมื่อร่างที่ผู้เล่นกำลังสิงร่างอยู่เสียชีวิตลง
+    /// </summary>
+    private void HandlePossessedBodyDeath()
+    {
+        Debug.LogWarning($"[PossessionManager] ร่างที่ผู้เล่นสิงอยู่ ('{(currentBody != null ? currentBody.gameObject.name : "Unknown")}') ได้เสียชีวิตลงแล้ว!");
+
+        // 1. บังคับปิดระบบเคลื่อนที่และการต่อสู้ของผู้เล่น เพื่อหยุดการขยับและปล่อยให้เล่นแอนิเมชันตาย
+        if (currentBody != null)
+        {
+            currentBody.enabled = false;
+
+            PlayerCombat combat = currentBody.GetComponent<PlayerCombat>();
+            if (combat != null)
+            {
+                combat.enabled = false;
+            }
+        }
+
+        // 2. เคลียร์เป้าหมายการตรวจเล็ง
+        if (targetDetector != null)
+        {
+            targetDetector.ClearTarget();
+        }
+
+        if (uiController != null)
+        {
+            uiController.HideUI();
+        }
+
+        // 3. ยิง Event สัญญาณความตายให้ระบบอื่นเข้ามารับช่วงต่อ (เช่น เปิด UI Game Over / Restart)
+        OnPossessedBodyDeath?.Invoke();
     }
 }
