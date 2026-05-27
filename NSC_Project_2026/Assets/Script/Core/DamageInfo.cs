@@ -4,10 +4,11 @@ using UnityEngine;
 // ค่าเริ่มต้นของ enum คือ 0 (Combat) ดังนั้นโค้ดเดิมที่ไม่ได้ระบุจะถือว่าเป็น Combat อัตโนมัติ
 public enum DamageType
 {
-    Combat,     // โดนศัตรูโจมตี (กล้องสั่น, เอฟเฟกต์โดนตี)
-    System,     // ดาเมจจากระบบ เช่น DamageZone, Trap (ไม่สั่นกล้อง)
-    FallDamage, // ตกจากที่สูง
-    Poison      // พิษ, DOT
+    Combat,           // ดาเมจจากการต่อสู้ทั่วไป (ใช้โปรไฟล์ควบคุมเอฟเฟกต์กระแทก)
+    Possession,       // ดาเมจ/เอฟเฟกต์ที่เกิดจากการสิงร่าง
+    System,           // ดาเมจจากระบบ เช่น DamageZone, Trap (ไม่สั่นกล้อง)
+    FallDamage,       // ตกจากที่สูง
+    Poison            // พิษ, DOT
 }
 
 // ข้อมูลการโจมตี สร้างเป็น Struct เพื่อหลีกเลี่ยงการจองหน่วยความจำใหม่ (Zero GC Allocation)
@@ -20,4 +21,6 @@ public struct DamageInfo
     public Vector3 hitPoint;       // จุดที่ถูกโจมตี (สำหรับสร้างเอฟเฟกต์หรือเลือด)
     public Vector3 knockbackForce; // แรงกระเด็นที่เป้าหมายจะได้รับ
     public GameObject attacker;    // ผู้โจมตี (เพื่อใช้ตรวจสอบหาต้นตอของการโจมตี)
+    public ImpactProfile impactProfile; // [เพิ่ม] โปรไฟล์เอฟเฟกต์กระแทก (กล้องสั่น, FOV kick, Hit Stop)
 }
+

@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-// ระบบกล้องสั่นเมื่อโดนโจมตี — Subscribe เฉพาะ OnDamageTaken แล้วเช็ค DamageType
+// ระบบกล้องสั่นเมื่อโดนโจมตี — ปรับตาม ImpactProfile (ScriptableObject) ของอาวุธ
 // แปะสคริปต์นี้ไว้ที่ Main Camera หรือ GameObject ใดก็ได้
 //
 // หลักการ: ไม่แตะตำแหน่งกล้องเอง แต่เขียนค่า shakeOffset ลงใน Playermovement.cameraShakeOffset
@@ -16,12 +16,14 @@ public class CameraShake : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    [Header("Shake Settings")]
-    [Tooltip("ความแรงของการสั่น (ยิ่งมากยิ่งสั่นแรง)")]
-    [SerializeField] private float shakeIntensity = 0.15f;
+    // ==================== Inspector Settings ====================
 
-    [Tooltip("ระยะเวลาที่กล้องสั่น (วินาที)")]
-    [SerializeField] private float shakeDuration = 0.2f;
+    [Header("Default Shake Settings")]
+    [Tooltip("ความแรงเริ่มต้นของการสั่น (ใช้เมื่อไม่มี ImpactProfile)")]
+    [SerializeField] private float defaultIntensity = 0.15f;
+
+    [Tooltip("ระยะเวลาเริ่มต้นที่กล้องสั่น (วินาที)")]
+    [SerializeField] private float defaultDuration = 0.2f;
 
     [Header("References")]
     [Tooltip("HealthSystem ของตัวละครที่ต้องการติดตาม (ลากมาใส่)")]
@@ -88,30 +90,60 @@ public class CameraShake : MonoBehaviour
 
     // ==================== Event Handler ====================
 
-    private void HandleDamageTaken(float damageAmount, DamageType damageType)
+    private void HandleDamageTaken(DamageInfo info)
     {
-        switch (damageType)
+        if (info.impactProfile != null)
         {
-            case DamageType.Combat:
-                // โดนศัตรูตี → สั่นกล้อง!
-                TriggerShake();
-                break;
+            if (info.impactProfile.enableReceiverShake)
+            {
+#if UNITY_EDITOR
+                Debug.Log($"[CameraShake] Receiver Shake triggered via profile. Intensity: {info.impactProfile.receiverShakeIntensity}, Duration: {info.impactProfile.receiverShakeDuration}");
+#endif
+                TriggerShake(info.impactProfile.receiverShakeIntensity, info.impactProfile.receiverShakeDuration);
+            }
+        }
+        else
+        {
+            // Fallback เฉพาะดาเมจพิเศษที่ไม่ใช่มอนสเตอร์ตีปกติ (เช่น ตกจากที่สูง)
+            if (info.damageType == DamageType.FallDamage)
+            {
+                TriggerShake(defaultIntensity * 1.5f, defaultDuration * 1.5f);
+            }
+        }
+    }
 
-            case DamageType.System:
-            case DamageType.Poison:
-                // ดาเมจจากระบบ/พิษ → ไม่สั่นกล้อง
-                break;
+    // ==================== Public API สำหรับผู้โจมตี (เมื่อฟันโดนศัตรู) ====================
 
-            case DamageType.FallDamage:
-                // ตกจากที่สูง → สั่นกล้อง
-                TriggerShake();
-                break;
+    /// <summary>
+    /// สั่งสั่นกล้องสำหรับฝ่ายผู้โจมตี (เรียกเมื่อผู้เล่นฟันโดนเป้าหมาย)
+    /// </summary>
+    public void TriggerAttackerShake(ImpactProfile profile)
+    {
+        if (profile == null) return;
+
+        if (profile.enableAttackerShake)
+        {
+#if UNITY_EDITOR
+            Debug.Log($"[CameraShake] Attacker Shake triggered via profile. Intensity: {profile.attackerShakeIntensity}, Duration: {profile.attackerShakeDuration}");
+#endif
+            TriggerShake(profile.attackerShakeIntensity, profile.attackerShakeDuration);
         }
     }
 
     // ==================== Shake Logic ====================
 
-    public void TriggerShake(float customIntensity = 0f, float customDuration = 0f)
+    /// <summary>
+    /// สั่งสั่นกล้องด้วยค่า Default จาก Inspector
+    /// </summary>
+    public void TriggerShake()
+    {
+        TriggerShake(defaultIntensity, defaultDuration);
+    }
+
+    /// <summary>
+    /// สั่งสั่นกล้องพร้อมกำหนดค่าเอง (เรียกจากระบบอื่นได้อิสระ เช่น Explosion, Possession, Skill)
+    /// </summary>
+    public void TriggerShake(float customIntensity, float customDuration)
     {
         // ต้องมี Playermovement เป้าหมายก่อนถึงจะสั่นได้
         if (targetPlayermovement == null) return;
@@ -121,10 +153,7 @@ public class CameraShake : MonoBehaviour
             StopCoroutine(shakeCoroutine);
         }
 
-        float finalIntensity = customIntensity > 0f ? customIntensity : shakeIntensity;
-        float finalDuration = customDuration > 0f ? customDuration : shakeDuration;
-
-        shakeCoroutine = StartCoroutine(ShakeRoutine(finalIntensity, finalDuration));
+        shakeCoroutine = StartCoroutine(ShakeRoutine(customIntensity, customDuration));
     }
 
     private IEnumerator ShakeRoutine(float intensity, float duration)

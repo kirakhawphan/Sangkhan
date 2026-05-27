@@ -259,6 +259,8 @@ public class Playermovement : MonoBehaviour
         inputDirection.z = vertical;
         inputDirection.Normalize();
 
+        bool isSprintingNow = false;
+
         if (inputDirection.sqrMagnitude >= 0.01f)
         {
             float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + (cameraTransform != null ? cameraTransform.eulerAngles.y : transform.eulerAngles.y);
@@ -268,12 +270,13 @@ public class Playermovement : MonoBehaviour
             // นำค่าไปใส่ใน Struct แทนการสร้าง new Vector3 ใหม่
             moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             
-            float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : moveSpeed;
+            isSprintingNow = Input.GetKey(KeyCode.LeftShift);
+            float currentSpeed = isSprintingNow ? runSpeed : moveSpeed;
             controller.Move(moveDirection.normalized * currentSpeed * Time.deltaTime);
 
             if (animator != null)
             {
-                float speedParam = Input.GetKey(KeyCode.LeftShift) ? 1f : 0.5f;
+                float speedParam = isSprintingNow ? 1f : 0.5f;
                 // ใช้ Hash แทน String ประหยัด Memory ฝั่งแอนิเมชันได้ 100%
                 animator.SetFloat(speedHash, speedParam, 0.1f, Time.deltaTime);
             }
@@ -284,6 +287,12 @@ public class Playermovement : MonoBehaviour
             {
                 animator.SetFloat(speedHash, 0f, 0.1f, Time.deltaTime);
             }
+        }
+
+        // แจ้ง CameraFOV ให้รู้ว่ากำลังวิ่งอยู่หรือไม่ (เฉพาะร่างที่ถูกสิง)
+        if (isPossessed && CameraFOV.Instance != null)
+        {
+            CameraFOV.Instance.SetSprinting(isSprintingNow);
         }
 
         if (animator != null)

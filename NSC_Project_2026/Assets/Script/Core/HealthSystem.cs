@@ -17,9 +17,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
     // อีเวนต์สำหรับแจ้งเตือนเมื่อเป้าหมายตาย
     public event System.Action OnDeath;
 
-    // อีเวนต์เฉพาะตอนโดนดาเมจ — ส่งทั้งจำนวนดาเมจและประเภท
-    // ใช้สำหรับระบบที่ต้องการแยกประเภทดาเมจ เช่น CameraShake, HitFlash, Sound
-    public event System.Action<float, DamageType> OnDamageTaken;
+    // อีเวนต์เฉพาะตอนโดนดาเมจ — ส่งทั้งก้อนข้อมูลดาเมจ
+    // ใช้สำหรับระบบที่ต้องการรายละเอียดของดาเมจ เช่น CameraShake, HitFlash, Sound
+    public event System.Action<DamageInfo> OnDamageTaken;
 
     // [เพิ่ม] สำหรับแจ้ง AI/Player ให้เล่นท่าชะงัก (ส่ง knockbackForce ไปด้วย)
     public event System.Action<Vector3> OnHurt;
@@ -68,7 +68,7 @@ public class HealthSystem : MonoBehaviour, IDamageable
         OnHealthChanged?.Invoke(healthPercentage);
 
         // ยิงอีเวนต์แจ้งรายละเอียดดาเมจ (สำหรับ CameraShake, HitFlash และอื่นๆ)
-        OnDamageTaken?.Invoke(info.damageAmount, info.damageType);
+        OnDamageTaken?.Invoke(info);
 
         // ตรวจสอบการตาย
         if (currentHealth <= 0f)

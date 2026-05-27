@@ -11,12 +11,11 @@ public class MeleeHitbox : MonoBehaviour
     [Header("Damage Settings")]
     [SerializeField] private float attackDamage = 20f;   // ดาเมจพื้นฐาน
     [SerializeField] private float poiseDamage = 10f;    // ดาเมจทำลายเกราะ (ความถึก)
+    [SerializeField] private DamageType damageType = DamageType.Combat; // ประเภทของดาเมจ (ให้เลือกได้ว่าเป็นผู้เล่นตี หรือ ศัตรูตี)
     [SerializeField] private float knockbackPower = 5f;  // ความแรงของการกระเด็น
 
     [Header("Game Feel Settings (Hit Impact)")]
-    [SerializeField] private float hitStopDuration = 0.08f; // ระยะเวลาหยุดเวลา (วินาที)
-    [SerializeField] private float hitShakeIntensity = 0.25f; // ความแรงสั่นกล้องตอนตีโดน
-    [SerializeField] private float hitShakeDuration = 0.15f; // ระยะเวลาสั่นกล้องตอนตีโดน
+    [SerializeField] private ImpactProfile impactProfile; // [แก้] โปรไฟล์ความแรงของการกระทบ (กล้องสั่น, FOV kick, Hit Stop)
 
     // Strict Rule: จอง Array ล่วงหน้า เพื่อป้องกัน GC Allocation ที่เกิดจากการสร้าง Array ใหม่ทุกครั้งที่โจมตี
     private readonly Collider[] hitResults = new Collider[10];
@@ -72,17 +71,23 @@ public class MeleeHitbox : MonoBehaviour
                 Debug.Log($"   => ฟันเข้าเป้า! ส่งดาเมจไปที่ '{col.gameObject.name}'");
 #endif
 
-                // [Game Feel] สั่งหยุดเวลา (Hit Stop) ตามค่าที่ตั้งไว้
-                if (ImpactManager.Instance != null && hitStopDuration > 0f)
+                // หากคนตีคือตัวละครที่ผู้เล่นควบคุมอยู่ ให้เช็คเรื่องโปรไฟล์ครอบทับของผู้เล่นหลัก (Option B)
+                Playermovement pm = GetComponentInParent<Playermovement>();
+                bool isPlayerAttacking = (pm != null && pm.isPossessed);
+
+                ImpactProfile activeProfile = this.impactProfile;
+                if (isPlayerAttacking && PossessionManager.Instance != null && PossessionManager.Instance.PlayerGlobalImpactProfile != null)
                 {
-                    ImpactManager.Instance.HitStop(hitStopDuration);
+                    activeProfile = PossessionManager.Instance.PlayerGlobalImpactProfile;
                 }
 
-                // [Game Feel] สั่นกล้องเมื่อตีโดนศัตรู ตามค่าที่ตั้งไว้
-                if (CameraShake.Instance != null && hitShakeIntensity > 0f)
+                // [Game Feel] สั่งหยุดเวลา (Hit Stop) ตามค่าที่ตั้งไว้ใน Profile ที่ใช้งาน
+                float currentHitStop = activeProfile != null ? activeProfile.hitStopDuration : 0.08f;
+                if (ImpactManager.Instance != null && currentHitStop > 0f)
                 {
-                    CameraShake.Instance.TriggerShake(hitShakeIntensity, hitShakeDuration);
+                    ImpactManager.Instance.HitStop(currentHitStop);
                 }
+
                 // หาจุดกึ่งกลางของคนตี (ถ้ามี HealthSystem ให้ยึดจากตรงนั้น ไม่งั้นใช้ Root)
                 Transform attackerBody = (myDamageable as Component)?.transform ?? transform.root;
                 Transform targetBody = (targetDamageable as Component)?.transform ?? col.transform;
@@ -98,13 +103,25 @@ public class MeleeHitbox : MonoBehaviour
                 {
                     damageAmount = attackDamage,
                     poiseDamage = poiseDamage,
+                    damageType = this.damageType, // ส่งประเภทดาเมจที่ตั้งไว้ไปให้เป้าหมาย
                     hitPoint = col.ClosestPoint(attackPoint.position), // หาจุดที่ใกล้ที่สุดบน Collider เพื่อเล่นเอฟเฟกต์
                     knockbackForce = knockbackDir * knockbackPower,
-                    attacker = this.gameObject
+                    attacker = this.gameObject,
+                    impactProfile = activeProfile // [เพิ่ม] แนบ Profile (รวมถึงโปรไฟล์ผู้เล่นครอบทับ) ไปกับดาเมจด้วย
                 };
 
                 // ส่งคำสั่ง TakeDamage ให้กับเป้าหมายที่ถูกตี
                 targetDamageable.TakeDamage(info);
+
+                // หากคนตีคือตัวละครที่ผู้เล่นควบคุมอยู่ ให้ส่งสัญญาณการสั่นกล้อง/FOV ขาตี (Attacker Feedback)
+#if UNITY_EDITOR
+                Debug.Log($"[MeleeHitbox] Check Camera Trigger -> Found Playermovement: {pm != null}, isPossessed: {pm?.isPossessed}, Has ActiveProfile: {activeProfile != null}");
+#endif
+                if (isPlayerAttacking && activeProfile != null)
+                {
+                    if (CameraShake.Instance != null) CameraShake.Instance.TriggerAttackerShake(activeProfile);
+                    if (CameraFOV.Instance != null) CameraFOV.Instance.TriggerAttackerKick(activeProfile);
+                }
             }
         }
 
@@ -125,5 +142,11 @@ public class MeleeHitbox : MonoBehaviour
     public void SetTargetLayer(LayerMask newLayer)
     {
         targetLayer = newLayer;
+    }
+
+    // [เพิ่ม] อนุญาตให้ระบบ Possession เปลี่ยนประเภทของดาเมจได้
+    public void SetDamageType(DamageType newType)
+    {
+        damageType = newType;
     }
 }

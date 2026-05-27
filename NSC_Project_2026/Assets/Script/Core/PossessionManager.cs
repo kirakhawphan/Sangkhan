@@ -3,6 +3,15 @@ using UnityEngine;
 // นำสคริปต์นี้ไปแปะไว้ที่ GameManager หรือ GameObject เปล่าๆ ในฉาก (ไม่ต้องแปะไว้ที่ตัวละครแล้ว)
 public class PossessionManager : MonoBehaviour
 {
+    public static PossessionManager Instance { get; private set; }
+
+    [Header("Global Settings")]
+    [SerializeField, Tooltip("โปรไฟล์เอฟเฟกต์กระแทกกลางที่จะใช้ครอบทับทุกร่างสิงข้ามตัวละคร (เมื่อผู้เล่นเป็นผู้โจมตี)")]
+    private ImpactProfile playerGlobalImpactProfile;
+
+    // Property สาธารณะเพื่อให้สคริปต์อื่น (เช่น MeleeHitbox) ดึงไปสวมทับได้
+    public ImpactProfile PlayerGlobalImpactProfile => playerGlobalImpactProfile;
+
     [Header("System References")]
     [SerializeField, Tooltip("ตัวละครเริ่มต้นที่ผู้เล่นควบคุม (ลากตัวละครที่มี Playermovement มาใส่)")]
     private Playermovement currentBody;
@@ -18,6 +27,9 @@ public class PossessionManager : MonoBehaviour
 
     [SerializeField, Tooltip("ระบบสั่นกล้อง (ลาก CameraShake มาใส่)")]
     private CameraShake cameraShake;
+
+    [SerializeField, Tooltip("ระบบเอฟเฟกต์ FOV (ลาก CameraFOV มาใส่)")]
+    private CameraFOV cameraFOV;
 
     [Header("Smooth Camera Transition")]
     [SerializeField, Tooltip("ระยะเวลาที่กล้องใช้เคลื่อนที่ไปยังร่างใหม่ (วินาที)\nใส่ 0 เพื่อปิดระบบนี้และให้กล้องวาร์ปไปทันที")]
@@ -44,6 +56,16 @@ public class PossessionManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (playerCamera == null)
         {
             playerCamera = Camera.main;
@@ -240,6 +262,11 @@ public class PossessionManager : MonoBehaviour
             if (cameraShake != null)
             {
                 cameraShake.SetTarget(newHealthSystem, newBody);
+            }
+
+            if (cameraFOV != null)
+            {
+                cameraFOV.SetTarget(newHealthSystem);
             }
 
             // 7. อัปเดตตัวแปร currentBody เป็นตัวใหม่
