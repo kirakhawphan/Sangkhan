@@ -76,13 +76,13 @@ public class MeleeHitbox : MonoBehaviour
                 bool isPlayerAttacking = (pm != null && pm.isPossessed);
 
                 ImpactProfile activeProfile = this.impactProfile;
-                if (isPlayerAttacking && PossessionManager.Instance != null && PossessionManager.Instance.PlayerGlobalImpactProfile != null)
+                if (isPlayerAttacking && pm.playerGlobalImpactProfile != null)
                 {
-                    activeProfile = PossessionManager.Instance.PlayerGlobalImpactProfile;
+                    activeProfile = pm.playerGlobalImpactProfile;
                 }
 
                 // [Game Feel] สั่งหยุดเวลา (Hit Stop) ตามค่าที่ตั้งไว้ใน Profile ที่ใช้งาน
-                float currentHitStop = activeProfile != null ? activeProfile.hitStopDuration : 0.08f;
+                float currentHitStop = activeProfile != null ? activeProfile.hitStopDuration : 0f;
                 if (ImpactManager.Instance != null && currentHitStop > 0f)
                 {
                     ImpactManager.Instance.HitStop(currentHitStop);
@@ -110,17 +110,34 @@ public class MeleeHitbox : MonoBehaviour
                     impactProfile = activeProfile // [เพิ่ม] แนบ Profile (รวมถึงโปรไฟล์ผู้เล่นครอบทับ) ไปกับดาเมจด้วย
                 };
 
-                // ส่งคำสั่ง TakeDamage ให้กับเป้าหมายที่ถูกตี
-                targetDamageable.TakeDamage(info);
+                // ส่งคำสั่ง TakeDamage ให้กับเป้าหมายที่ถูกตี (คืนค่า true หากตีจน Poise แตก)
+                bool poiseBroken = targetDamageable.TakeDamage(info);
 
                 // หากคนตีคือตัวละครที่ผู้เล่นควบคุมอยู่ ให้ส่งสัญญาณการสั่นกล้อง/FOV ขาตี (Attacker Feedback)
 #if UNITY_EDITOR
                 Debug.Log($"[MeleeHitbox] Check Camera Trigger -> Found Playermovement: {pm != null}, isPossessed: {pm?.isPossessed}, Has ActiveProfile: {activeProfile != null}");
 #endif
-                if (isPlayerAttacking && activeProfile != null)
+                if (isPlayerAttacking)
                 {
-                    if (CameraShake.Instance != null) CameraShake.Instance.TriggerAttackerShake(activeProfile);
-                    if (CameraFOV.Instance != null) CameraFOV.Instance.TriggerAttackerKick(activeProfile);
+                    ImpactProfile finalProfile = activeProfile;
+                    
+                    // [ใหม่] ถ้า Poise แตก ให้สลับไปใช้โปรไฟล์พิเศษจากร่างนั้นๆ
+                    if (poiseBroken && pm.poiseBreakImpactProfile != null)
+                    {
+                        finalProfile = pm.poiseBreakImpactProfile;
+                        
+                        // เรียก HitStop พิเศษสำหรับจังหวะเกราะแตก (จะทับค่าเดิมในเฟรมเดียวกันให้โดยอัตโนมัติหากนานกว่า)
+                        if (ImpactManager.Instance != null && finalProfile.hitStopDuration > 0f)
+                        {
+                            ImpactManager.Instance.HitStop(finalProfile.hitStopDuration);
+                        }
+                    }
+
+                    if (finalProfile != null)
+                    {
+                        if (CameraShake.Instance != null) CameraShake.Instance.TriggerAttackerShake(finalProfile);
+                        if (CameraFOV.Instance != null) CameraFOV.Instance.TriggerAttackerKick(finalProfile);
+                    }
                 }
             }
         }

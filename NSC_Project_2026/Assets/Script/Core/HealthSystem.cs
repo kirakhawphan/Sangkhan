@@ -54,9 +54,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
     }
 
     // ฟังก์ชันรับดาเมจตามข้อบังคับของ IDamageable
-    public void TakeDamage(DamageInfo info)
+    public bool TakeDamage(DamageInfo info)
     {
-        if (isDead) return;
+        if (isDead) return false;
 
         // ลดเลือดตามจำนวนดาเมจ แล้ว Clamp ไว้ในช่วง [0, maxHealth]
         currentHealth = Mathf.Clamp(currentHealth - info.damageAmount, 0f, maxHealth);
@@ -74,18 +74,18 @@ public class HealthSystem : MonoBehaviour, IDamageable
         if (currentHealth <= 0f)
         {
             Die();
-            return; // Guard Clause ป้องกันการเกิด Poise Broken พร้อมกับตาย
+            return false; // Guard Clause ป้องกันการเกิด Poise Broken พร้อมกับตาย
         }
 
         // --- [เพิ่ม] ลอจิกระบบ Poise (ชะงัก) ---
         // เช็คว่าถ้าเป็นผู้เล่นกำลังควบคุมร่างนี้อยู่ (isPossessed) จะได้รับ Super Armor ทันที (ไม่ชะงัก)
-        if (playerMovementCache != null && playerMovementCache.isPossessed) return;
+        if (playerMovementCache != null && playerMovementCache.isPossessed) return false;
 
         // หักค่า Poise ปัจจุบันด้วยดาเมจ Poise ที่ได้รับ
         currentPoise -= info.poiseDamage;
 
         // Guard Clause: ถ้าเกราะยังไม่แตก (Poise > 0) ให้ออกจากฟังก์ชันไปเลย ไม่ต้องชะงัก
-        if (currentPoise > 0) return;
+        if (currentPoise > 0) return false;
 
         // เมื่อเกราะแตก (Poise <= 0): ให้รีเซ็ตค่ากลับให้เต็ม
         currentPoise = maxPoise;
@@ -93,6 +93,8 @@ public class HealthSystem : MonoBehaviour, IDamageable
         // ยิง Event แจ้งเอฟเฟกต์เกราะแตก และสั่งให้ตัวละครชะงัก
         OnPoiseBroken?.Invoke();
         OnHurt?.Invoke(info.knockbackForce);
+        
+        return true; // คืนค่า true บ่งบอกว่าการโจมตีนี้ทำให้ Poise แตก
     }
 
     /// <summary>

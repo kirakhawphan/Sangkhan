@@ -11,6 +11,13 @@ public class Playermovement : MonoBehaviour
     [Tooltip("ล็อกกล้องไม่ให้ HandleCamera ทำงาน (ใช้ตอน PossessionManager กำลังเคลื่อนกล้องแบบ Smooth)")]
     public bool cameraLocked = false;
 
+    [Header("Impact Settings (When Possessed)")]
+    [Tooltip("โปรไฟล์การสั่นเมื่อตัวละครนี้โจมตีโดนเป้าหมาย (เว้นว่างไว้หากไม่ต้องการให้สั่น)")]
+    public ImpactProfile playerGlobalImpactProfile;
+
+    [Tooltip("โปรไฟล์การสั่นรุนแรงเมื่อตัวละครนี้โจมตีจนเกราะ (Poise) ของศัตรูแตก")]
+    public ImpactProfile poiseBreakImpactProfile;
+
     // ค่า offset จาก CameraShake (สคริปต์อื่นเขียนค่านี้ได้ Playermovement จะบวกเพิ่มให้ตอนเซ็ตกล้อง)
     [HideInInspector]
     public Vector3 cameraShakeOffset;

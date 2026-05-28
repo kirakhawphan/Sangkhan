@@ -2395,7 +2395,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 234f0a944eb78414ba906a01bc0e080f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PossessionManager
-  playerGlobalImpactProfile: {fileID: 11400000, guid: cc631515793e9ee4d9bc9507eae438b1, type: 2}
+  playerGlobalImpactProfile: {fileID: 0}
+  poiseBreakImpactProfile: {fileID: 11400000, guid: cc631515793e9ee4d9bc9507eae438b1, type: 2}
   currentBody: {fileID: 2073900280}
   playerCamera: {fileID: 330585545}
   uiController: {fileID: 1090824936}

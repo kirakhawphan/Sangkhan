@@ -5,13 +5,6 @@ public class PossessionManager : MonoBehaviour
 {
     public static PossessionManager Instance { get; private set; }
 
-    [Header("Global Settings")]
-    [SerializeField, Tooltip("โปรไฟล์เอฟเฟกต์กระแทกกลางที่จะใช้ครอบทับทุกร่างสิงข้ามตัวละคร (เมื่อผู้เล่นเป็นผู้โจมตี)")]
-    private ImpactProfile playerGlobalImpactProfile;
-
-    // Property สาธารณะเพื่อให้สคริปต์อื่น (เช่น MeleeHitbox) ดึงไปสวมทับได้
-    public ImpactProfile PlayerGlobalImpactProfile => playerGlobalImpactProfile;
-
     [Header("System References")]
     [SerializeField, Tooltip("ตัวละครเริ่มต้นที่ผู้เล่นควบคุม (ลากตัวละครที่มี Playermovement มาใส่)")]
     private Playermovement currentBody;
