@@ -8,14 +8,9 @@ public class MeleeHitbox : MonoBehaviour
     [SerializeField] private float attackRadius = 1.0f;  // รัศมีของ Hitbox
     [SerializeField] private LayerMask targetLayer;      // เลเยอร์ที่เราต้องการจะโจมตี
 
-    [Header("Damage Settings")]
-    [SerializeField] private float attackDamage = 20f;   // ดาเมจพื้นฐาน
-    [SerializeField] private float poiseDamage = 10f;    // ดาเมจทำลายเกราะ (ความถึก)
-    [SerializeField] private DamageType damageType = DamageType.Combat; // ประเภทของดาเมจ (ให้เลือกได้ว่าเป็นผู้เล่นตี หรือ ศัตรูตี)
-    [SerializeField] private float knockbackPower = 5f;  // ความแรงของการกระเด็น
-
-    [Header("Game Feel Settings (Hit Impact)")]
-    [SerializeField] private ImpactProfile impactProfile; // [แก้] โปรไฟล์ความแรงของการกระทบ (กล้องสั่น, FOV kick, Hit Stop)
+    [Header("Profile Settings")]
+    [SerializeField, Tooltip("ลากไฟล์ HitboxProfile (เก็บค่าดาเมจและ Impact) มาใส่ตรงนี้")]
+    private HitboxProfile profile;
 
     // Strict Rule: จอง Array ล่วงหน้า เพื่อป้องกัน GC Allocation ที่เกิดจากการสร้าง Array ใหม่ทุกครั้งที่โจมตี
     private readonly Collider[] hitResults = new Collider[10];
@@ -71,11 +66,18 @@ public class MeleeHitbox : MonoBehaviour
                 Debug.Log($"   => ฟันเข้าเป้า! ส่งดาเมจไปที่ '{col.gameObject.name}'");
 #endif
 
+                // หากไม่มี Profile ให้ข้ามการโจมตีนี้ไปเลย หรือจะใส่ Fallback ก็ได้
+                if (profile == null)
+                {
+                    Debug.LogWarning($"[MeleeHitbox] '{gameObject.name}' ไม่มี HitboxProfile แนบไว้! (การโจมตีถูกยกเลิก)", this);
+                    continue;
+                }
+
                 // หากคนตีคือตัวละครที่ผู้เล่นควบคุมอยู่ ให้เช็คเรื่องโปรไฟล์ครอบทับของผู้เล่นหลัก (Option B)
                 Playermovement pm = GetComponentInParent<Playermovement>();
                 bool isPlayerAttacking = (pm != null && pm.isPossessed);
 
-                ImpactProfile activeProfile = this.impactProfile;
+                ImpactProfile activeProfile = profile.impactProfile;
                 if (isPlayerAttacking && pm.playerGlobalImpactProfile != null)
                 {
                     activeProfile = pm.playerGlobalImpactProfile;
@@ -101,11 +103,11 @@ public class MeleeHitbox : MonoBehaviour
                 // สร้าง DamageInfo ในรูปแบบของ Struct (ไม่มีการ Alloc Memory บน Heap = Zero GC)
                 DamageInfo info = new DamageInfo
                 {
-                    damageAmount = attackDamage,
-                    poiseDamage = poiseDamage,
-                    damageType = this.damageType, // ส่งประเภทดาเมจที่ตั้งไว้ไปให้เป้าหมาย
+                    damageAmount = profile.attackDamage,
+                    poiseDamage = profile.poiseDamage,
+                    damageType = profile.damageType, // ส่งประเภทดาเมจที่ตั้งไว้ไปให้เป้าหมาย
                     hitPoint = col.ClosestPoint(attackPoint.position), // หาจุดที่ใกล้ที่สุดบน Collider เพื่อเล่นเอฟเฟกต์
-                    knockbackForce = knockbackDir * knockbackPower,
+                    knockbackForce = knockbackDir * profile.knockbackPower,
                     attacker = this.gameObject,
                     impactProfile = activeProfile // [เพิ่ม] แนบ Profile (รวมถึงโปรไฟล์ผู้เล่นครอบทับ) ไปกับดาเมจด้วย
                 };
@@ -159,11 +161,5 @@ public class MeleeHitbox : MonoBehaviour
     public void SetTargetLayer(LayerMask newLayer)
     {
         targetLayer = newLayer;
-    }
-
-    // [เพิ่ม] อนุญาตให้ระบบ Possession เปลี่ยนประเภทของดาเมจได้
-    public void SetDamageType(DamageType newType)
-    {
-        damageType = newType;
     }
 }
