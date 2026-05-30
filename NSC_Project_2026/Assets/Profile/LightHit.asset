@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 886f9f5e2c3857b4d8a38cb3c132fbc3, type: 3}
   m_Name: LightHit
   m_EditorClassIdentifier: 
-  hitStopDuration: 0.08
+  hitStopDuration: 0.02
   enableAttackerShake: 1
   attackerShakeIntensity: 0.05
   attackerShakeDuration: 0.15

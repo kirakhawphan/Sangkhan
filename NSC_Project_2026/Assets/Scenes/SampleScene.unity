@@ -843,11 +843,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 512
-  attackDamage: 20
-  poiseDamage: 20
-  damageType: 0
-  knockbackPower: 5
-  impactProfile: {fileID: 0}
+  profile: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -982,6 +978,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 195133822896860166, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: profile
+      value: 
+      objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
     - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: aimOrigin
       value: 
@@ -1030,6 +1030,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HumanM_Model (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 5600849943225398132, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: profile
+      value: 
+      objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1949,7 +1953,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
@@ -2163,6 +2167,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Elite (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4454865198815418803, guid: 3c4c28fdfad0be14abd266e6c207e10c, type: 3}
+      propertyPath: poiseBreakImpactProfile
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2193,17 +2201,17 @@ RectTransform:
   m_GameObject: {fileID: 1554672260}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1596409434}
   - {fileID: 1924140472}
   m_Father: {fileID: 1158856999}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 170, y: -30}
-  m_SizeDelta: {x: 300, y: 30}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 122.1, y: 62.5}
+  m_SizeDelta: {x: 60, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1596409433
 GameObject:
@@ -2232,15 +2240,15 @@ RectTransform:
   m_GameObject: {fileID: 1596409433}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.99, y: 0.75, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1554672261}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0.25, y: 0.25}
+  m_SizeDelta: {x: 0.5, y: 0.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1596409435
 MonoBehaviour:
@@ -2255,14 +2263,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4c37b30cd02062b45bed7b520c251da5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0584b6e1920b8d649a283055c7ff27db, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2329,11 +2337,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 512
-  attackDamage: 20
-  poiseDamage: 20
-  damageType: 0
-  knockbackPower: 5
-  impactProfile: {fileID: 0}
+  profile: {fileID: 0}
 --- !u!1 &1809364619
 GameObject:
   m_ObjectHideFlags: 0
@@ -2395,8 +2399,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 234f0a944eb78414ba906a01bc0e080f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PossessionManager
-  playerGlobalImpactProfile: {fileID: 0}
-  poiseBreakImpactProfile: {fileID: 11400000, guid: cc631515793e9ee4d9bc9507eae438b1, type: 2}
   currentBody: {fileID: 2073900280}
   playerCamera: {fileID: 330585545}
   uiController: {fileID: 1090824936}
@@ -2537,7 +2539,7 @@ RectTransform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1554672261}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2566,7 +2568,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 63ea6b70358681d4a94833ae86471876, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a114ed0bb8dea55449e4f30703727337, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2752,17 +2754,37 @@ PrefabInstance:
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 330585546}
+    - target: {fileID: 621295562132278406, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: poiseBreakImpactProfile
+      value: 
+      objectReference: {fileID: 11400000, guid: cc631515793e9ee4d9bc9507eae438b1, type: 2}
+    - target: {fileID: 2428073808891550360, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: profile
+      value: 
+      objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
     - target: {fileID: 2428073808891550360, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: damageType
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2428073808891550360, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: attackRadius
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 2428073808891550360, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: impactProfile
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 2624678033020056902, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: profile
+      value: 
+      objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
+    - target: {fileID: 2624678033020056902, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: damageType
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2624678033020056902, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: attackRadius
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 2624678033020056902, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: impactProfile
@@ -2829,6 +2851,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 195133822896860166, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: profile
+      value: 
+      objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
     - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: aimOrigin
       value: 
@@ -2877,6 +2903,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HumanM_Model
       objectReference: {fileID: 0}
+    - target: {fileID: 5600849943225398132, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: profile
+      value: 
+      objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
