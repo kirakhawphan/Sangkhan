@@ -135,9 +135,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 1024
-  attackDamage: 10
-  poiseDamage: 10
-  knockbackPower: 10
+  profile: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
 --- !u!1 &7071869931728363728
 GameObject:
   m_ObjectHideFlags: 0
@@ -218,9 +216,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 1024
-  attackDamage: 10
-  poiseDamage: 10
-  knockbackPower: 10
+  profile: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
 --- !u!1001 &4712306783824839886
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -243,7 +239,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 26.12
+      value: 30.29
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2faa610713d3b3c439473daa55e8c60a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -697,6 +693,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Playermovement
   isPossessed: 0
   cameraLocked: 0
+  playerGlobalImpactProfile: {fileID: 0}
+  poiseBreakImpactProfile: {fileID: 11400000, guid: cc631515793e9ee4d9bc9507eae438b1, type: 2}
   cameraShakeOffset: {x: 0, y: 0, z: 0}
   moveSpeed: 6
   runSpeed: 10
@@ -791,11 +789,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   maxComboStep: 2
   inputBufferTime: 0.2
-  attackCooldown: 0.3
-  comboResetTime: 1
-  comboFinishCooldown: 1.5
+  attackCooldown: 0.5
+  comboResetTime: 0.7
+  comboFinishCooldown: 2
   normalAttackLockTime: 0.5
   finishAttackLockTime: 1
+  missRecoveryPenalty: 0.2
   dashCurve:
     serializedVersion: 2
     m_Curve:

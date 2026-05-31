@@ -40,6 +40,11 @@ public class PossessionManager : MonoBehaviour
     [Tooltip("อีเวนต์เมื่อร่างสิงของผู้เล่นเสียชีวิตลง (สำหรับเกาะไปเขียน Restart/GameOver)")]
     public event System.Action OnPossessedBodyDeath;
 
+    [Tooltip("อีเวนต์เมื่อสิงร่างใหม่สำเร็จ (สำหรับรีเซ็ต PG หรือระบบอื่นๆ)")]
+    public event System.Action OnPossessionChanged;
+
+    public Playermovement CurrentBody => currentBody;
+
     // --- Smooth Camera Transition State ---
     private bool isTransitioning = false;
     private float transitionTimer = 0f;
@@ -264,6 +269,9 @@ public class PossessionManager : MonoBehaviour
 
             // 7. อัปเดตตัวแปร currentBody เป็นตัวใหม่
             currentBody = newBody;
+
+            // แจ้งเตือนระบบอื่นว่าเปลี่ยนร่างสิงสำเร็จ
+            OnPossessionChanged?.Invoke();
 
             // ซ่อน UI หลังสิงร่างสำเร็จ
             targetDetector.ClearTarget();
