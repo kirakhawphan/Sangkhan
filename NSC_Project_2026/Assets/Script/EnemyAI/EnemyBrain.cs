@@ -31,6 +31,7 @@ public class EnemyBrain : MonoBehaviour
     public ChaseState chaseState { get; private set; }
     public AttackState attackState { get; private set; }
     public StunnedState stunnedState { get; private set; }
+    public CircleState circleState { get; private set; }
 
     // สถานะปัจจุบันที่ AI กำลังเป็นอยู่
     private IEnemyState currentState;
@@ -45,6 +46,7 @@ public class EnemyBrain : MonoBehaviour
         chaseState = new ChaseState(this);
         attackState = new AttackState(this);
         stunnedState = new StunnedState(this, stunDuration);
+        circleState = new CircleState(this);
     }
 
     private void Start()
@@ -121,6 +123,9 @@ public class EnemyBrain : MonoBehaviour
     {
         if (animator != null) animator.SetTrigger("Hurt");
 
+        // คืนบัตรคิวทันทีเมื่อโดน Stun (เพื่อให้ศัตรูที่รออยู่ได้รับโอกาสโจมตีแทน)
+        CombatSlotManager.Instance?.ReleaseSlot(this);
+
         // สั่งกระเด็นตามแรงที่ได้รับจาก DamageInfo
         if (movement != null) movement.ApplyKnockback(knockbackForce);
 
@@ -131,6 +136,9 @@ public class EnemyBrain : MonoBehaviour
     // [เพิ่ม] เมื่อตาย สั่งเล่นแอนิเมชันตาย
     private void HandleDeath()
     {
+        // คืนบัตรคิวทันทีเมื่อตาย (ป้องกันคิวค้าง)
+        CombatSlotManager.Instance?.ReleaseSlot(this);
+
         if (animator != null) animator.SetTrigger("Die");
     }
 }

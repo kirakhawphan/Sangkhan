@@ -52,12 +52,15 @@ public class AttackState : IEnemyState
         // เมื่อเวลาผ่านไปจนจบแอนิเมชัน ให้กลับไปไล่ล่าต่อ
         if (Time.time >= exitTime)
         {
-            brain.ChangeState(brain.chaseState);
+            // ตีเสร็จแล้ว → ถอยออกดูเชิงก่อน แทนที่จะวิ่งไล่ตีใหม่ทันที
+            brain.ChangeState(brain.circleState);
         }
     }
 
     public void Exit()
     {
+        // [สำคัญ] คืนบัตรคิวกลับให้ CombatSlotManager เพื่อให้ศัตรูตัวอื่นได้โจมตีแทน
+        CombatSlotManager.Instance?.ReleaseSlot(brain);
 
         // [เพิ่ม] ปลดล็อกการเดินเมื่อออกจากสถานะตี
         if (brain.movement != null)

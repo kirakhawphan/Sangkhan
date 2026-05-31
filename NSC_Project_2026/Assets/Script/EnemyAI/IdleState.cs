@@ -29,8 +29,17 @@ public class IdleState : IEnemyState
         // ตรวจสอบว่าระบบสายตาเห็นเป้าหมาย (PossessableEntity) หรือไม่
         if (brain.targetDetector.CurrentTarget != null)
         {
-            // ถ้าเจอเป้าหมาย ให้สั่งสมองเปลี่ยนเป็นสถานะวิ่งไล่ตาม!
-            brain.ChangeState(brain.chaseState);
+            // [แก้ไข] ขอบัตรคิวตั้งแต่เห็นหน้าเลย
+            if (CombatSlotManager.Instance != null && CombatSlotManager.Instance.RequestSlot(brain))
+            {
+                // คิวว่าง -> วิ่งไล่เพื่อโจมตี
+                brain.ChangeState(brain.chaseState);
+            }
+            else
+            {
+                // คิวเต็ม -> ไปเดินวนดูเชิงที่ระยะ 4 เมตรทันที (ไม่วิ่งเข้าไปใกล้ๆ แล้วค่อยถอย)
+                brain.ChangeState(brain.circleState);
+            }
         }
     }
 

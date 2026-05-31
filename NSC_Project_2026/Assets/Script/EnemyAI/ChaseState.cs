@@ -47,6 +47,7 @@ public class ChaseState : IEnemyState
 
             if (isCloseEnough && isNearStoppingPoint)
             {
+                // ไม่ต้องขอคิวแล้ว เพราะเรามีคิวอยู่แล้วถึงเข้า ChaseState ได้
                 brain.ChangeState(brain.attackState);
             }
         }
