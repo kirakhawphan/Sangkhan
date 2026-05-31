@@ -140,5 +140,8 @@ public class EnemyBrain : MonoBehaviour
         CombatSlotManager.Instance?.ReleaseSlot(this);
 
         if (animator != null) animator.SetTrigger("Die");
+
+        // ลบ GameObject ออกจากฉากหลังจากหน่วงเวลาให้แอนิเมชันตายเล่นจบ (เช่น 3 วินาที)
+        Destroy(gameObject, 3f);
     }
 }
