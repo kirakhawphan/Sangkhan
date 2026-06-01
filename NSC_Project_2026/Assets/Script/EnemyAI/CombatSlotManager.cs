@@ -16,14 +16,23 @@ public class CombatSlotManager : MonoBehaviour
     [Tooltip("จำนวนศัตรูที่สามารถเข้าโจมตีประชิดผู้เล่นได้พร้อมกัน")]
     [SerializeField] private int maxMeleeSlots = 2;
 
+    [Header("Off-Screen Delay")]
+    [Tooltip("ระยะเวลา (วินาที) ที่ศัตรูนอกมุมกล้องต้องรอก่อนได้รับบัตรคิว (0 = ปิดระบบ)")]
+    [SerializeField] public float offScreenSlotDelay = 1.5f;
+
     // รายชื่อศัตรูที่กำลังถือบัตรคิวอยู่ (กำลังโจมตีผู้เล่น)
     private readonly List<EnemyBrain> _currentAttackers = new List<EnemyBrain>();
+
+    // [Zero GC] Cache กล้องหลักไว้ครั้งเดียว หลีกเลี่ยง Camera.main lookup ทุก frame
+    private Camera _mainCamera;
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            // [Zero GC] Cache กล้องหลักตั้งแต่เริ่มเกม
+            _mainCamera = Camera.main;
         }
         else
         {
@@ -71,4 +80,21 @@ public class CombatSlotManager : MonoBehaviour
     /// จำนวนช่องว่างที่เหลืออยู่ (สำหรับ Debug)
     /// </summary>
     public int AvailableSlots => maxMeleeSlots - _currentAttackers.Count;
+
+    /// <summary>
+    /// ตรวจสอบว่าศัตรูอยู่ในมุมมองของกล้องหลักหรือไม่
+    /// ใช้ Camera Viewport เพื่อเช็คว่า position อยู่ใน [0,1] x [0,1] และอยู่หน้ากล้อง (z > 0)
+    /// </summary>
+    /// <param name="worldPosition">ตำแหน่งโลกของศัตรู</param>
+    /// <returns>true ถ้าอยู่ในหน้าจอ</returns>
+    public static bool IsEnemyOnScreen(Vector3 worldPosition)
+    {
+        // [Zero GC] ใช้ _mainCamera ที่ cache ไว้แทน Camera.main (ไม่ allocate ทุก frame)
+        Camera cam = Instance != null ? Instance._mainCamera : Camera.main;
+        if (cam == null) return true; // ถ้าไม่มีกล้อง ถือว่าอยู่บนหน้าจอเสมอ (ปลอดภัย)
+
+        Vector3 vp = cam.WorldToViewportPoint(worldPosition);
+        // vp.z > 0 = อยู่หน้ากล้อง, [0,1] x [0,1] = อยู่ใน Viewport
+        return vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f;
+    }
 }

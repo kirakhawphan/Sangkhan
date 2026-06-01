@@ -21,6 +21,11 @@ public class CircleState : IEnemyState
     private float strafeChangeTimer;
     private float strafeChangeDuration = 2.5f; // เปลี่ยนทิศทาง Strafe ทุก X วินาที
 
+    // --- Off-Screen Delay ---
+    // นับเวลาที่ศัตรูอยู่ในมุมกล้อง (on-screen) ต่อเนื่อง
+    // ต้องอยู่ในจอครบ offScreenSlotDelay วินาที จึงจะขอ Slot ได้
+    private float onScreenAccumulator = 0f;
+
     public CircleState(EnemyBrain brain)
     {
         this.brain = brain;
@@ -35,6 +40,10 @@ public class CircleState : IEnemyState
         retryTimer = retryInterval * 0.5f; // หน่วงครึ่งรอบแรกก่อนขอ
         strafeChangeTimer = 0f;
         strafeDirection = Random.value > 0.5f ? 1f : -1f;
+
+        // รีเซ็ต Off-Screen Delay ทุกครั้งที่เข้า State นี้
+        // ทำให้ศัตรูต้องรออยู่ในจออีกครั้งก่อนขอ Slot ใหม่
+        onScreenAccumulator = 0f;
     }
 
     public void Update()
@@ -89,6 +98,22 @@ public class CircleState : IEnemyState
         if (brain.movement != null) brain.movement.MoveTo(desiredPos);
         brain.movement?.FaceTarget(targetPos);
 
+        // 4. อัปเดต On-Screen Accumulator สำหรับ Off-Screen Delay
+        bool isOnScreen = CombatSlotManager.IsEnemyOnScreen(brain.transform.position);
+        if (isOnScreen)
+        {
+            // ศัตรูอยู่ในจอ: สะสมเวลา (จำกัดไม่เกิน delay เพื่อ memory)
+            float delay = CombatSlotManager.Instance != null
+                ? CombatSlotManager.Instance.offScreenSlotDelay
+                : 1.5f;
+            onScreenAccumulator = Mathf.Min(onScreenAccumulator + Time.deltaTime, delay + 1f);
+        }
+        else
+        {
+            // ศัตรูออกนอกจอ: รีเซ็ต timer ทันที (ต้องรออยู่ในจอใหม่อีกครั้ง)
+            onScreenAccumulator = 0f;
+        }
+
         // 4. พยายามขอบัตรคิวทุก retryInterval วินาที
         retryTimer += Time.deltaTime;
         if (retryTimer >= retryInterval)
@@ -106,6 +131,7 @@ public class CircleState : IEnemyState
     /// <summary>
     /// ขอบัตรคิวจาก CombatSlotManager
     /// ถ้าได้รับอนุญาต ให้กลับไป ChaseState เพื่อวิ่งเข้าหาเป้าหมายและโจมตี
+    /// จะไม่ขอถ้าศัตรูยังอยู่นอกมุมกล้องไม่นานพอ (Off-Screen Delay)
     /// </summary>
     private void TryClaimSlot()
     {
@@ -113,6 +139,14 @@ public class CircleState : IEnemyState
 
         // เช็คแค่ว่าพร้อมตีหรือยัง (คูลดาวน์โจมตีเสร็จไหม)
         if (brain.combat == null || !brain.combat.CanAttack()) return;
+
+        // [Off-Screen Delay] ถ้าศัตรูอยู่นอกหน้าจอ และยังสะสมเวลาไม่ครบ → ยังขอ Slot ไม่ได้
+        float requiredDelay = CombatSlotManager.Instance.offScreenSlotDelay;
+        if (requiredDelay > 0f && onScreenAccumulator < requiredDelay)
+        {
+            // ยังรออยู่ในจอไม่นานพอ ข้ามรอบนี้ไป
+            return;
+        }
 
         // ขอบัตรคิว
         if (CombatSlotManager.Instance.RequestSlot(brain))
