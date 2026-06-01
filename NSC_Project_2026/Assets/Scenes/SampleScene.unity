@@ -3658,9 +3658,17 @@ PrefabInstance:
       propertyPath: aimOrigin
       value: 
       objectReference: {fileID: 330585546}
+    - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: jumpHeight
+      value: 4.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7265605888329472589, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: maxHealth
       value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 8746380158766238901, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
