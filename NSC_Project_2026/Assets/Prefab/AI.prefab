@@ -752,8 +752,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd146a40b66ce7542988e92a2f37975d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
-  maxHealth: 500
-  maxPoise: 35
+  maxHealth: 50
+  maxPoise: 1
   currentHealth: 0
   healthPercentage: 0
   currentPoise: 0
