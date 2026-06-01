@@ -31,6 +31,19 @@ public class EnemyCombat : MonoBehaviour
         get { return currentMovementLockTimer > 0f; }
     }
 
+    /// <summary>
+    /// [เพิ่ม] รับค่าจาก EnemyData เพื่อเขียนทับค่า Inspector
+    /// </summary>
+    public void Initialize(EnemyData data)
+    {
+        if (data == null) return;
+        attackCooldown = data.attackCooldown;
+        attackRange = data.attackRange;
+        comboStep = data.comboStep;
+        normalAttackLockTime = data.normalAttackLockTime;
+        finishAttackLockTime = data.finishAttackLockTime;
+    }
+
     private void Update()
     {
         if (currentMovementLockTimer > 0f) currentMovementLockTimer -= Time.deltaTime;

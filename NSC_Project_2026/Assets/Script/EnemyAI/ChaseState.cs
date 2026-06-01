@@ -16,7 +16,7 @@ public class ChaseState : IEnemyState
     {
         Debug.Log("Enter Chase State");
         // เพิ่มความเร็วในการวิ่งไล่ล่า (ถ้ามี)
-        if (brain.movement != null) brain.movement.SetSpeed(6f);
+        if (brain.movement != null) brain.movement.SetSpeed(brain.data != null ? brain.data.chaseSpeed : 6f);
     }
 
     public void Update()
@@ -24,6 +24,9 @@ public class ChaseState : IEnemyState
         // 1. เช็คก่อนว่าเป้าหมายยังอยู่ในสายตาไหม
         if (brain.targetDetector == null || brain.targetDetector.CurrentTarget == null)
         {
+            // [แก้บัค] คืนบัตรคิวก่อนกลับ Idle เพื่อให้ศัตรูตัวอื่นได้รับโอกาสโจมตีแทน
+            CombatSlotManager.Instance?.ReleaseSlot(brain);
+
             // ถ้าเป้าหมายหลุดระยะ หรือถูกลบออกไป ให้กลับไปสถานะ Idle
             brain.ChangeState(brain.idleState);
             return;

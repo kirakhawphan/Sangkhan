@@ -7,7 +7,7 @@ public class AttackState : IEnemyState
 {
     private EnemyBrain brain;
     private float exitTime;
-    private const float ATTACK_ANIMATION_TIME = 1.2f; // ระยะเวลาจำลองของท่าตี (ควรสัมพันธ์กับแอนิเมชัน)
+    private float AttackAnimationTime => brain.data != null ? brain.data.attackAnimationTime : 1.2f;
 
     public AttackState(EnemyBrain brain)
     {
@@ -31,7 +31,7 @@ public class AttackState : IEnemyState
         }
 
         // ตั้งเวลาที่จะออกจาก State นี้ (เพื่อให้แอนิเมชันเล่นจบก่อน)
-        exitTime = Time.time + ATTACK_ANIMATION_TIME;
+        exitTime = Time.time + AttackAnimationTime;
     }
 
     public void Update()

@@ -11,15 +11,15 @@ public class CircleState : IEnemyState
     private EnemyBrain brain;
 
     [Header("Circling Settings")]
-    private float circleRadius = 4f;       // รัศมีที่รักษาจากผู้เล่น
-    private float strafeSpeed = 2f;        // ความเร็วตอนเดิน Strafe
-    private float retryInterval = 1.2f;   // ขอบัตรคิวใหม่ทุก X วินาที
-    private float tooCloseDistance = 2.5f; // ถ้าเข้าใกล้กว่านี้ ให้ถอยออก
+    private float circleRadius => brain.data != null ? brain.data.circleRadius : 4f;
+    private float strafeSpeed => brain.data != null ? brain.data.strafeSpeed : 2f;
+    private float retryInterval => brain.data != null ? brain.data.retryInterval : 1.2f;
+    private float tooCloseDistance => brain.data != null ? brain.data.tooCloseDistance : 2.5f;
 
     private float retryTimer;
     private float strafeDirection = 1f;        // 1 = ขวา, -1 = ซ้าย
     private float strafeChangeTimer;
-    private float strafeChangeDuration = 2.5f; // เปลี่ยนทิศทาง Strafe ทุก X วินาที
+    private float strafeChangeDuration => brain.data != null ? brain.data.strafeChangeDuration : 2.5f;
 
     // --- Off-Screen Delay ---
     // นับเวลาที่ศัตรูอยู่ในมุมกล้อง (on-screen) ต่อเนื่อง
@@ -51,6 +51,9 @@ public class CircleState : IEnemyState
         // 1. ถ้าสูญหายเป้าหมาย กลับ Idle
         if (brain.targetDetector == null || brain.targetDetector.CurrentTarget == null)
         {
+            // [แก้บัค] คืนบัตรคิวก่อนกลับ Idle เพื่อให้ศัตรูตัวอื่นได้รับโอกาสโจมตีแทน
+            CombatSlotManager.Instance?.ReleaseSlot(brain);
+
             brain.ChangeState(brain.idleState);
             return;
         }

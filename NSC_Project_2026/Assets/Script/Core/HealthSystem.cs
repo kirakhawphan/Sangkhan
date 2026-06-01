@@ -47,6 +47,21 @@ public class HealthSystem : MonoBehaviour, IDamageable
         playerMovementCache = GetComponent<Playermovement>();
     }
 
+    /// <summary>
+    /// [เพิ่ม] ใช้ตั้งค่าเริ่มต้นใหม่ (สำหรับ Enemy ที่โหลดค่าจาก EnemyData)
+    /// </summary>
+    public void Initialize(float newMaxHealth, float newMaxPoise)
+    {
+        maxHealth = newMaxHealth;
+        maxPoise = newMaxPoise;
+        
+        currentHealth = maxHealth;
+        currentPoise = maxPoise;
+        
+        healthPercentage = GetHealthPercentage();
+        OnHealthChanged?.Invoke(healthPercentage);
+    }
+
     private void Start()
     {
         // ส่งอีเวนต์ค่าเลือดเริ่มต้น เพื่อให้ UI อัปเดตเมื่อเริ่มเกม

@@ -6,6 +6,9 @@ using UnityEngine;
 /// </summary>
 public class EnemyBrain : MonoBehaviour
 {
+    [Header("Enemy Data (ศูนย์รวมค่าสเตตัส)")]
+    public EnemyData data;
+
     [Header("Body Parts (อวัยวะของ AI)")]
     [Tooltip("ระบบกล้ามเนื้อ (เคลื่อนที่)")]
     public EnemyMovement movement;
@@ -41,6 +44,21 @@ public class EnemyBrain : MonoBehaviour
 
     private void Awake()
     {
+        // ส่งข้อมูลจาก EnemyData ไปตั้งค่าให้อวัยวะต่างๆ
+        if (data != null)
+        {
+            if (movement != null) movement.Initialize(data);
+            if (combat != null) combat.Initialize(data);
+            if (health != null) health.Initialize(data.maxHealth, data.maxPoise);
+            
+            stunDuration = data.stunDuration;
+            if (targetDetector != null)
+            {
+                targetDetector.maxDetectionDistance = data.detectionRange;
+                targetDetector.aimRadius = data.aimRadius;
+            }
+        }
+
         // จอง Memory แค่ครั้งเดียวตอนเริ่มเกม (Zero GC Pattern)
         idleState = new IdleState(this);
         chaseState = new ChaseState(this);
@@ -111,6 +129,11 @@ public class EnemyBrain : MonoBehaviour
         {
             movement.StopMovement();
         }
+
+        // [Safety Net] คืนบัตรคิวทันทีที่ถูก Disable/Destroy ไม่ว่าจะเกิดจากสาเหตุใดก็ตาม
+        // List.Remove() ปลอดภัยถ้า element ไม่อยู่ในลิสต์ (คืนค่า false เฉยๆ ไม่ throw)
+        // ดังนั้นการเรียกซ้ำจาก HandleDeath + OnDisable จึงไม่มีผลเสีย
+        CombatSlotManager.Instance?.ReleaseSlot(this);
 
         // [เพิ่ม] ยกเลิกการสมัคร Event
         if (health == null) return;

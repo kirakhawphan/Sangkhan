@@ -69,6 +69,27 @@ public class EnemyMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// [เพิ่ม] รับค่าจาก EnemyData เพื่อเขียนทับค่า Inspector
+    /// </summary>
+    public void Initialize(EnemyData data)
+    {
+        if (data == null) return;
+        
+        moveSpeed = data.idleSpeed;
+        stoppingDistance = data.stoppingDistance;
+        rotationSpeed = data.rotationSpeed;
+        keepDistance = data.keepDistance;
+        retreatDistance = data.retreatDistance;
+        retreatMultiplier = data.retreatMultiplier;
+
+        if (agent != null)
+        {
+            agent.stoppingDistance = stoppingDistance;
+            agent.speed = moveSpeed;
+        }
+    }
+
     private void Update()
     {
         // ถ้าถูกผู้เล่นสิงร่าง (NavMeshAgent ถูกปิด) ให้หยุดซิงค์แอนิเมชัน เพื่อไม่ให้ไปแย่งทำงานกับสคริปต์ Playermovement

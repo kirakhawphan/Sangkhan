@@ -20,7 +20,7 @@ public class IdleState : IEnemyState
         if (brain.movement != null)
         {
             brain.movement.StopMovement();
-            brain.movement.SetSpeed(3.5f);
+            brain.movement.SetSpeed(brain.data != null ? brain.data.idleSpeed : 3.5f);
         }
     }
 
