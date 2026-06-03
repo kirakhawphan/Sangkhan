@@ -3658,10 +3658,18 @@ PrefabInstance:
       propertyPath: aimOrigin
       value: 
       objectReference: {fileID: 330585546}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: skillSlot2Key
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: jumpHeight
       value: 4.5
       objectReference: {fileID: 0}
+    - target: {fileID: 6940651526641352503, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: skillRunner
+      value: 
+      objectReference: {fileID: 7918690802805254927}
     - target: {fileID: 7265605888329472589, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: maxHealth
       value: 500
@@ -3673,8 +3681,34 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1086987425130691850, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7918690802805254927}
   m_SourcePrefab: {fileID: 100100000, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+--- !u!1 &7918690802805254926 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1086987425130691850, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+  m_PrefabInstance: {fileID: 7918690802805254925}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7918690802805254927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7918690802805254926}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1e3bb7c0cff67d4393051c1e5f0f764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skillSlots:
+  - skillData: {fileID: 11400000, guid: d858e39de5b1ae84297baeb6bd73b72d, type: 2}
+    activationKey: 113
+    cooldown:
+      duration: 2
+  showSkillGizmos: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

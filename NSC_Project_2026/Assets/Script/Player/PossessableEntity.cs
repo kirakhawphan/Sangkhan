@@ -24,6 +24,9 @@ public class PossessableEntity : MonoBehaviour
     [SerializeField, Tooltip("ระบบต่อสู้ของผู้เล่น (เปิดตอนสิงร่าง, ปิดตอนออก)")]
     private PlayerCombat playerCombat;
 
+    [SerializeField, Tooltip("ระบบสกิลของผู้เล่น (เปิดตอนสิงร่าง, ปิดตอนออก)")]
+    private Skills.Core.SkillRunner skillRunner;
+
     [SerializeField, Tooltip("ระบบฟิสิกส์การชนและการเดินของผู้เล่น (ถ้ามี)")]
     private CharacterController characterController;
 
@@ -97,10 +100,14 @@ public class PossessableEntity : MonoBehaviour
             playerController.enabled = true;
         }
 
-        // 5. [เพิ่ม] เปิดระบบต่อสู้ของผู้เล่น
+        // 5. [เพิ่ม] เปิดระบบต่อสู้และสกิลของผู้เล่น
         if (playerCombat != null)
         {
             playerCombat.enabled = true;
+        }
+        if (skillRunner != null)
+        {
+            skillRunner.enabled = true;
         }
 
         // 5. เปลี่ยน Layer ของเป้าหมายเรดาร์เป็น "Player"
@@ -136,10 +143,14 @@ public class PossessableEntity : MonoBehaviour
             playerController.enabled = false;
         }
 
-        // 2. [เพิ่ม] ปิดระบบต่อสู้ของผู้เล่น
+        // 2. [เพิ่ม] ปิดระบบต่อสู้และสกิลของผู้เล่น
         if (playerCombat != null)
         {
             playerCombat.enabled = false;
+        }
+        if (skillRunner != null)
+        {
+            skillRunner.enabled = false;
         }
 
         // 2. เปลี่ยน Layer เรดาร์กลับคืนให้กลายเป็นเป้าหมายรอให้คนอื่นมาสิงต่อ

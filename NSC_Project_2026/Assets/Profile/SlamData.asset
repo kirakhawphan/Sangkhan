@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 705af6b143a6f4041ac1fbd84def258a, type: 3}
+  m_Name: SlamData
+  m_EditorClassIdentifier: 
+  skillName: Slam
+  description: 
+  icon: {fileID: 0}
+  cooldownDuration: 5
+  animationTrigger: Slam
+  movementLockTime: 0.8
+  effect: {fileID: 11400000, guid: d1373e15d1437be4e9d36ed4a1b244bc, type: 2}
+  vfxPrefab: {fileID: 0}
+  sfxClip: {fileID: 0}

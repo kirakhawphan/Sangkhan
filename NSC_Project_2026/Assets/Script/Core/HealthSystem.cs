@@ -88,6 +88,8 @@ public class HealthSystem : MonoBehaviour, IDamageable
         // ตรวจสอบการตาย
         if (currentHealth <= 0f)
         {
+            // [แก้ไข] ทำให้ตีตายแล้วยังกระเด็นอยู่
+            OnHurt?.Invoke(info.knockbackForce);
             Die();
             return false; // Guard Clause ป้องกันการเกิด Poise Broken พร้อมกับตาย
         }

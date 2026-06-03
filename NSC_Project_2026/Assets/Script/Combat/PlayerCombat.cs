@@ -11,9 +11,9 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private float attackCooldown = 0.3f;
     [SerializeField] private float comboResetTime = 1.0f;
     [SerializeField] private float comboFinishCooldown = 1.5f;
-    
-    [Header("Movement Locks")]
-    [SerializeField] private float normalAttackLockTime = 0.3f;
+
+    [Header("Combo Window Options")]
+    [Tooltip("ผู้เล่นสามารถกดตีครั้งถัดไปล่วงหน้าได้นานแค่ไหน")] [SerializeField] private float normalAttackLockTime = 0.3f;
     [SerializeField] private float finishAttackLockTime = 0.6f;
 
     [Header("Miss Penalty")]
@@ -37,6 +37,7 @@ public class PlayerCombat : MonoBehaviour
     private Animator currentAnimator;
     private CharacterController currentController;
     private Transform currentBodyTransform;
+    private Skills.Core.SkillRunner currentSkillRunner; // [เพิ่ม] ระบบสกิล
 
     // --- Timers ---
     private float currentBufferTimer;
@@ -65,6 +66,7 @@ public class PlayerCombat : MonoBehaviour
         currentWeaponHitboxes = GetComponentsInChildren<MeleeHitbox>();
         currentController = GetComponent<CharacterController>();
         currentBodyTransform = transform;
+        currentSkillRunner = GetComponent<Skills.Core.SkillRunner>(); // [เพิ่ม] ดึงคอมโพเนนต์สกิล
 
 #if UNITY_EDITOR
         if (currentWeaponHitboxes == null || currentWeaponHitboxes.Length == 0)
@@ -215,6 +217,17 @@ public class PlayerCombat : MonoBehaviour
 
         // Trigger Event สำหรับสคริปต์ภายนอก
         OnAttackExecuted?.Invoke();
+    }
+
+    /// <summary>
+    /// [เพิ่ม] ใช้ล็อคการเดินจากระบบอื่น (เช่น SkillRunner)
+    /// </summary>
+    public void LockMovementForSkill(float duration)
+    {
+        if (currentMovementLockTimer < duration)
+        {
+            currentMovementLockTimer = duration;
+        }
     }
 
     private void RotateTowardsTarget()
