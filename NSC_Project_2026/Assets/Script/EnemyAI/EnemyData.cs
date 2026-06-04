@@ -30,7 +30,7 @@ public class EnemyData : ScriptableObject
 
     [Header("AI Behavior")]
     public float stunDuration = 0.8f;
-    public float circleRadius = 4f;
+    public float circleRadius = 8f;
     public float tooCloseDistance = 2.5f;
     public float retryInterval = 1.2f;
     public float strafeChangeDuration = 2.5f;
