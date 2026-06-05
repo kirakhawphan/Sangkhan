@@ -12,6 +12,14 @@ public class HealthSystem : MonoBehaviour, IDamageable
     [SerializeField] private float healthPercentage;
     [SerializeField] private float currentPoise; // [เพิ่ม] ค่าความถึกปัจจุบัน
 
+    [Header("I-Frame Settings")]
+    [SerializeField] private float iFrameDuration = 1.0f;
+    [SerializeField] private bool iFrameIgnoresSystemDamage = true; // DamageType.System เจาะทะลุ I-Frame
+
+    private float iFrameTimer;
+
+    public bool IsInvincible => iFrameTimer > 0f;
+
     // อีเวนต์สำหรับส่งค่า % เลือด (0.0 ถึง 1.0) ไปให้ UI หรือระบบอื่นที่ติดตามอยู่
     public event System.Action<float> OnHealthChanged;
     // อีเวนต์สำหรับแจ้งเตือนเมื่อเป้าหมายตาย
@@ -26,6 +34,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
     
     // [เพิ่ม] สำหรับเล่นเอฟเฟกต์เกราะแตก
     public event System.Action OnPoiseBroken;
+
+    // [เพิ่ม] แจ้งเตือนเมื่อสถานะ I-Frame เปลี่ยนแปลง (สำหรับ Visual Feedback)
+    public event System.Action<bool> OnIFrameStateChanged;
 
     private bool isDead = false;
     private Playermovement playerMovementCache; // แคชไว้ตรวจสอบสถานะการสิงร่าง
@@ -68,10 +79,36 @@ public class HealthSystem : MonoBehaviour, IDamageable
         OnHealthChanged?.Invoke(GetHealthPercentage());
     }
 
+    private void Update()
+    {
+        if (iFrameTimer > 0f)
+        {
+            iFrameTimer -= Time.deltaTime;
+            if (iFrameTimer <= 0f)
+            {
+                OnIFrameStateChanged?.Invoke(false);
+            }
+        }
+    }
+
     // ฟังก์ชันรับดาเมจตามข้อบังคับของ IDamageable
     public bool TakeDamage(DamageInfo info)
     {
         if (isDead) return false;
+
+        // --- [เพิ่ม] I-Frame Check ---
+        if (IsInvincible)
+        {
+            // อนุญาตให้ DamageType.System เจาะทะลุ I-Frame ได้ (เช่น DamageZone, กับดัก)
+            if (iFrameIgnoresSystemDamage && info.damageType == DamageType.System) 
+            { 
+                // ผ่านไปรับดาเมจปกติ 
+            }
+            else 
+            {
+                return false; // บล็อกดาเมจทั้งหมดในช่วง I-Frame
+            }
+        }
 
         // ลดเลือดตามจำนวนดาเมจ แล้ว Clamp ไว้ในช่วง [0, maxHealth]
         currentHealth = Mathf.Clamp(currentHealth - info.damageAmount, 0f, maxHealth);
@@ -84,6 +121,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
 
         // ยิงอีเวนต์แจ้งรายละเอียดดาเมจ (สำหรับ CameraShake, HitFlash และอื่นๆ)
         OnDamageTaken?.Invoke(info);
+
+        // [เพิ่ม] เปิด I-Frame เมื่อรับดาเมจ
+        ActivateIFrame();
 
         // ตรวจสอบการตาย
         if (currentHealth <= 0f)
@@ -139,6 +179,16 @@ public class HealthSystem : MonoBehaviour, IDamageable
         
         // ยิงอีเวนต์เมื่อตาย เพื่อให้สคริปต์อื่นมาเกาะ (เช่น เล่นแอนิเมชันตาย, ดรอปของ)
         OnDeath?.Invoke();
+    }
+
+    /// <summary>
+    /// เปิดสถานะ I-Frame ทันที
+    /// </summary>
+    public void ActivateIFrame()
+    {
+        if (isDead) return;
+        iFrameTimer = iFrameDuration;
+        OnIFrameStateChanged?.Invoke(true);
     }
 
     // ฟังก์ชันช่วยเหลือสำหรับคำนวณ % เลือด เพื่อความสะดวก

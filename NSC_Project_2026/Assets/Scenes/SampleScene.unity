@@ -3659,12 +3659,48 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 330585546}
     - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashDistance
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: skillSlot2Key
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashCurve.m_Curve.Array.data[0].time
+      value: 0.000705719
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashCurve.m_Curve.Array.data[1].time
+      value: 0.94332886
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashCurve.m_Curve.Array.data[0].value
+      value: 0.802166
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashCurve.m_Curve.Array.data[1].value
+      value: 1.0047607
+      objectReference: {fileID: 0}
+    - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashKey
+      value: 113
       objectReference: {fileID: 0}
     - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: jumpHeight
       value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashDistance
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: dashDuration
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6940651526641352503, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: skillRunner
@@ -3705,7 +3741,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillSlots:
   - skillData: {fileID: 11400000, guid: d858e39de5b1ae84297baeb6bd73b72d, type: 2}
-    activationKey: 113
+    activationKey: 48
     cooldown:
       duration: 2
   - skillData: {fileID: 11400000, guid: 3d15749abb9d84d42a2f241d5f9e2d6a, type: 2}

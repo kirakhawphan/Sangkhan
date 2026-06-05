@@ -44,7 +44,7 @@ public class PGBarUI : MonoBehaviour
         // หากไม่ได้ลากใส่ไว้ใน Inspector ให้ลองค้นหาอัตโนมัติ
         if (targetPGController == null)
         {
-            targetPGController = FindObjectOfType<PGController>();
+            targetPGController = FindFirstObjectByType<PGController>();
             if (targetPGController != null)
             {
                 targetPGController.OnPGChanged += HandlePGChanged;
