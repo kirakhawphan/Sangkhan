@@ -3708,6 +3708,10 @@ MonoBehaviour:
     activationKey: 113
     cooldown:
       duration: 2
+  - skillData: {fileID: 11400000, guid: 3d15749abb9d84d42a2f241d5f9e2d6a, type: 2}
+    activationKey: 114
+    cooldown:
+      duration: 2
   showSkillGizmos: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

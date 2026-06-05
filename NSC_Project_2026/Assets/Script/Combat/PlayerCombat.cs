@@ -28,6 +28,9 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private TargetDetector targetDetector;
     [SerializeField] private Transform aimOrigin;
 
+    // [เพิ่ม] เปิดให้สคริปต์อื่น (เช่น GrappleSkillEffect) เข้าถึง TargetDetector ได้
+    public TargetDetector GetTargetDetector() => targetDetector;
+
     // --- Events for Decoupling ---
     public event Action OnAttackExecuted;
     public event Action<bool> OnAttackStateChanged;
