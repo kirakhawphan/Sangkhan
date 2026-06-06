@@ -18,6 +18,11 @@ public class HealthSystem : MonoBehaviour, IDamageable
 
     private float iFrameTimer;
 
+    [Header("Block Settings")]
+    [Tooltip("ตัวคูณดาเมจเมื่อตั้งการ์ด (0 = กัน 100%, 0.5 = โดนดาเมจ 50%)")]
+    [SerializeField] private float blockDamageMultiplier = 0f;
+    public bool IsBlocking { get; set; } = false;
+
     public bool IsInvincible => iFrameTimer > 0f;
 
     // อีเวนต์สำหรับส่งค่า % เลือด (0.0 ถึง 1.0) ไปให้ UI หรือระบบอื่นที่ติดตามอยู่
@@ -110,8 +115,16 @@ public class HealthSystem : MonoBehaviour, IDamageable
             }
         }
 
+        // --- [เพิ่ม] Block Logic ---
+        float finalDamage = info.damageAmount;
+        if (IsBlocking)
+        {
+            finalDamage *= blockDamageMultiplier;
+            // แจ้งให้ทราบว่ามีการป้องกันสำเร็จ (สามารถเพิ่ม Event สำหรับเล่นเสียง/เอฟเฟกต์กันได้ที่นี่)
+        }
+
         // ลดเลือดตามจำนวนดาเมจ แล้ว Clamp ไว้ในช่วง [0, maxHealth]
-        currentHealth = Mathf.Clamp(currentHealth - info.damageAmount, 0f, maxHealth);
+        currentHealth = Mathf.Clamp(currentHealth - finalDamage, 0f, maxHealth);
 
         // อัปเดตค่า Debug ใน Inspector
         healthPercentage = GetHealthPercentage();

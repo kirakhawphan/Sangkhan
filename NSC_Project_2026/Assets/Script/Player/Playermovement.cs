@@ -25,6 +25,8 @@ public class Playermovement : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float runSpeed = 10f;
+    [Tooltip("ตัวคูณความเร็วตอนเดินขณะตั้งการ์ด (เช่น 0.5 คือเดินช้าลงครึ่งนึง)")]
+    [SerializeField] private float blockSpeedMultiplier = 0.5f;
     [SerializeField] private float jumpHeight = 1.5f;
     [SerializeField] private float gravity = -9.81f;
     [SerializeField] private float turnSmoothTime = 0.1f;
@@ -43,22 +45,6 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundDistance = 0.4f;
     [SerializeField] private LayerMask groundMask;
-
-    [Header("Dash Settings")]
-    [SerializeField] private KeyCode dashKey = KeyCode.LeftAlt;
-    [SerializeField] private float dashDistance = 5f;
-    [SerializeField] private float dashDuration = 0.3f;
-    [SerializeField] private AnimationCurve dashCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f));
-    [SerializeField] private Cooldown dashCooldown = new Cooldown { duration = 1.0f };
-
-    // --- Dash State ---
-    public bool IsDashing => isDashing;
-    private bool isDashing = false;
-    private float currentDashTime = 0f;
-    private Vector3 dashDirection;
-    private float dashAnimationClipLength = 0.3f;
-    private float originalAnimatorSpeed = 1f;
-    private float dashCurveArea = 0.5f;
 
     [Header("Animation")]
     [SerializeField] private Animator animator;
@@ -86,7 +72,6 @@ public class Playermovement : MonoBehaviour
     private readonly int speedHash = Animator.StringToHash("Speed");
     private readonly int isGroundedHash = Animator.StringToHash("IsGrounded");
     private readonly int jumpHash = Animator.StringToHash("Jump");
-    private readonly int dashHash = Animator.StringToHash("Dash");
 
     private bool wasSprinting = false; // ตัวแปรสำหรับเช็คสถานะการวิ่ง เพื่อลดการประมวลผลซ้ำ
 
@@ -107,7 +92,6 @@ public class Playermovement : MonoBehaviour
 
         // 3. แคชการคำนวณคณิตศาสตร์ที่ตายตัวไว้ล่วงหน้า
         CalculateJumpVelocity();
-        CalculateDashCurveArea();
     }
 
     private void Start()
@@ -121,31 +105,12 @@ public class Playermovement : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
-        SyncDashDurationWithAnimation();
-    }
-
-    private void SyncDashDurationWithAnimation()
-    {
-        if (animator == null || animator.runtimeAnimatorController == null) return;
-
-        foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
-        {
-            string clipName = clip.name.ToLower();
-            // หาความยาวของแอนิเมชันที่น่าจะเป็น Dash
-            if (clipName.Contains("dash") || clipName.Contains("roll") || clipName.Contains("dodge"))
-            {
-                dashAnimationClipLength = clip.length; // เก็บความยาวต้นฉบับไว้ ไม่ทับค่าใน Inspector
-                break;
-            }
-        }
     }
 
     // หากมีการปรับค่าความสูงกระโดดใน Inspector ขณะเล่น ให้คำนวณใหม่
     private void OnValidate()
     {
         CalculateJumpVelocity();
-        CalculateDashCurveArea();
     }
 
     private void CalculateJumpVelocity()
@@ -153,26 +118,9 @@ public class Playermovement : MonoBehaviour
         calculatedJumpVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
     }
 
-    private void CalculateDashCurveArea()
+    public float GetCameraAngle()
     {
-        dashCurveArea = 0f;
-        if (dashCurve == null)
-        {
-            dashCurveArea = 1f;
-            return;
-        }
-        
-        int steps = 20;
-        for (int i = 0; i < steps; i++)
-        {
-            float t1 = (float)i / steps;
-            float t2 = (float)(i + 1) / steps;
-            float v1 = dashCurve.Evaluate(t1);
-            float v2 = dashCurve.Evaluate(t2);
-            dashCurveArea += (v1 + v2) / 2f * (1f / steps);
-        }
-        
-        if (dashCurveArea <= 0.01f) dashCurveArea = 1f;
+        return cameraTransform != null ? cameraTransform.eulerAngles.y : transform.eulerAngles.y;
     }
 
     // ฟังก์ชันสำหรับรับสืบทอดกล้องตอนสลับร่าง
@@ -229,87 +177,9 @@ public class Playermovement : MonoBehaviour
         if (isPossessed)
         {
             HandleMouseLock();
-            HandleDashInput(); // [เพิ่ม] รับคำสั่ง Dash
         }
         
         HandleMovement();
-    }
-
-    private void HandleDashInput()
-    {
-        if (isDashing)
-        {
-            currentDashTime += Time.deltaTime;
-
-            if (currentDashTime >= dashDuration)
-            {
-                isDashing = false;
-                if (animator != null)
-                {
-                    animator.speed = originalAnimatorSpeed; // รีเซ็ตความเร็วกลับเป็นปกติ
-                }
-            }
-            return;
-        }
-
-        // เช็ค Input กด Dash, เช็คคูลดาวน์ และต้องเหยียบพื้นอยู่
-        if (Input.GetKeyDown(dashKey) && dashCooldown.IsReady() && isGrounded)
-        {
-            bool isAttacking = playerCombat != null && playerCombat.IsAttacking;
-            if (isAttacking) return; // ห้ามพุ่งตอนโจมตี (หรือจะให้พุ่งเพื่อ Cancel ตีก็ได้ ขึ้นอยู่กับ Design)
-
-            StartDash();
-        }
-    }
-
-    private void StartDash()
-    {
-        isDashing = true;
-        currentDashTime = 0f;
-        dashCooldown.StartCooldown();
-
-        // ปรับความเร็วของ Animator ให้แอนิเมชันเล่นจบพร้อมกับ dashDuration พอดี
-        if (animator != null)
-        {
-            originalAnimatorSpeed = animator.speed;
-            if (dashDuration > 0f && dashAnimationClipLength > 0f)
-            {
-                animator.speed = dashAnimationClipLength / dashDuration;
-            }
-        }
-
-        // คำนวณทิศทางพุ่งจาก Input WASD
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-        Vector3 inputDir = new Vector3(h, 0f, v).normalized;
-
-        if (inputDir.sqrMagnitude >= 0.01f)
-        {
-            // พุ่งไปในทิศทางที่กด โดยอิงตามมุมกล้อง (ถ้าไม่มีกล้องให้ใช้อิงจากมุมตัวละครแทน)
-            float cameraAngle = cameraTransform != null ? cameraTransform.eulerAngles.y : transform.eulerAngles.y;
-            float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + cameraAngle;
-            dashDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            
-            // หันหน้าตัวละครไปทางที่พุ่งทันที
-            transform.rotation = Quaternion.Euler(0f, targetAngle, 0f);
-        }
-        else
-        {
-            // ถ้าไม่กดอะไรเลย ให้พุ่งไปข้างหน้าตามทิศที่ตัวละครหันหน้าอยู่
-            dashDirection = transform.forward;
-        }
-
-        // เปิด I-Frame ถ้ามี HealthSystem
-        if (playerHealthSystem != null)
-        {
-            playerHealthSystem.ActivateIFrame();
-        }
-
-        // ทริกเกอร์แอนิเมชัน
-        if (animator != null)
-        {
-            animator.SetTrigger(dashHash);
-        }
     }
 
     private void HandleMouseLock()
@@ -391,17 +261,11 @@ public class Playermovement : MonoBehaviour
 
         // 2. คำนวณทิศทางการเดิน (รับค่าเฉพาะตอนที่ถูกสิงร่าง)
         bool isAttacking = playerCombat != null && playerCombat.IsAttacking;
+        bool isDodging = playerCombat != null && playerCombat.IsDodging;
         bool isSprintingNow = false;
 
-        if (isDashing)
+        if (isDodging)
         {
-            // ใช้ความเร็วจาก Curve เพื่อให้การพุ่งมีความไหลลื่น
-            float normalizedTime = currentDashTime / dashDuration;
-            float force = dashCurve.Evaluate(normalizedTime);
-            // ชดเชยกับพื้นที่ใต้กราฟ เพื่อให้ระยะทางพุ่งรวมเท่ากับ dashDistance เป๊ะๆ
-            Vector3 dashMovement = dashDirection * ((dashDistance / dashDuration) * (force / dashCurveArea) * Time.deltaTime);
-            controller.Move(dashMovement);
-
             // แจ้ง Animator ให้รู้ว่าไม่ได้เดินปกติ
             if (animator != null)
             {
@@ -432,8 +296,17 @@ public class Playermovement : MonoBehaviour
 
                 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
                 
-                isSprintingNow = Input.GetKey(KeyCode.LeftShift);
+                // ปรับความเร็วถ้ากำลังตั้งการ์ด
+                bool isBlocking = playerHealthSystem != null && playerHealthSystem.IsBlocking;
+                
+                isSprintingNow = Input.GetKey(KeyCode.LeftShift) && !isBlocking;
+                
                 float currentSpeed = isSprintingNow ? runSpeed : moveSpeed;
+                if (isBlocking)
+                {
+                    currentSpeed *= blockSpeedMultiplier;
+                }
+
                 controller.Move(moveDirection.normalized * currentSpeed * Time.deltaTime);
 
                 if (animator != null)
@@ -466,8 +339,8 @@ public class Playermovement : MonoBehaviour
             animator.SetBool(isGroundedHash, isGrounded);
         }
 
-        // 3. ระบบกระโดด (รับค่าเฉพาะตอนถูกสิง + ห้ามกระโดดขณะโจมตีและแดช)
-        if (isPossessed && !isAttacking && !isDashing && Input.GetButtonDown("Jump") && isGrounded)
+        // 3. ระบบกระโดด (รับค่าเฉพาะตอนถูกสิง + ห้ามกระโดดขณะโจมตีและหลบ)
+        if (isPossessed && !isAttacking && !isDodging && Input.GetButtonDown("Jump") && isGrounded)
         {
             // ดึงค่าที่คำนวณไว้ล่วงหน้ามาใช้ทันที ไม่ต้องรันสูตร Mathf.Sqrt ซ้ำ
             velocity.y = calculatedJumpVelocity;

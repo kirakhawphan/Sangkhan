@@ -24,6 +24,19 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private float dashDistance = 2f;
     [SerializeField] private float dashDuration = 0.2f;
 
+    [Header("Block Settings")]
+    [Tooltip("เปิด-ปิดระบบตั้งการ์ด (Block)")]
+    public bool canBlock = true;
+
+    [Header("Dodge Settings")]
+    [Tooltip("เปิด-ปิดระบบหลบ (Dodge/Dash)")]
+    public bool canDodge = true;
+    [SerializeField] private KeyCode dodgeKey = KeyCode.Q;
+    [SerializeField] private float dodgeDistance = 5f;
+    [SerializeField] private float dodgeDuration = 0.3f;
+    [SerializeField] private AnimationCurve dodgeCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f));
+    [SerializeField] private Cooldown dodgeCooldown = new Cooldown { duration = 1.0f };
+
     [Header("Combat Targeting (Soft Lock-on)")]
     [SerializeField] private TargetDetector targetDetector;
     [SerializeField] private Transform aimOrigin;
@@ -41,6 +54,7 @@ public class PlayerCombat : MonoBehaviour
     private CharacterController currentController;
     private Transform currentBodyTransform;
     private Skills.Core.SkillRunner currentSkillRunner; // [เพิ่ม] ระบบสกิล
+    private HealthSystem currentHealthSystem; // [เพิ่ม] สำหรับอัปเดตสถานะ Block
 
     // --- Timers ---
     private float currentBufferTimer;
@@ -53,6 +67,15 @@ public class PlayerCombat : MonoBehaviour
     private bool isDashing;
     private float currentDashTime;
 
+    // --- Dodge State ---
+    public bool IsDodging => isDodging;
+    private bool isDodging = false;
+    private float currentDodgeTime = 0f;
+    private Vector3 dodgeDirection;
+    private float dodgeAnimationClipLength = 0.3f;
+    private float originalAnimatorSpeed = 1f;
+    private float dodgeCurveArea = 0.5f;
+
     // --- Combo State ---
     private int currentComboStep;
     private bool wasAttacking; // สำหรับเช็คการเปลี่ยน state เพื่อยิง Event
@@ -62,6 +85,10 @@ public class PlayerCombat : MonoBehaviour
     // Zero GC: Cached Animator Hashes
     private static readonly int HashComboStep = Animator.StringToHash("ComboStep");
     private static readonly int HashAttack = Animator.StringToHash("Attack");
+    private static readonly int HashIsBlocking = Animator.StringToHash("IsBlocking");
+    private static readonly int HashDodge = Animator.StringToHash("Dash");
+
+    private Playermovement playermovement;
 
     private void Awake()
     {
@@ -70,6 +97,11 @@ public class PlayerCombat : MonoBehaviour
         currentController = GetComponent<CharacterController>();
         currentBodyTransform = transform;
         currentSkillRunner = GetComponent<Skills.Core.SkillRunner>(); // [เพิ่ม] ดึงคอมโพเนนต์สกิล
+        currentHealthSystem = GetComponent<HealthSystem>(); // [เพิ่ม] แคช HealthSystem
+        playermovement = GetComponent<Playermovement>();
+
+        dodgeKey = KeyCode.Q;
+        CalculateDodgeCurveArea();
 
 #if UNITY_EDITOR
         if (currentWeaponHitboxes == null || currentWeaponHitboxes.Length == 0)
@@ -77,6 +109,53 @@ public class PlayerCombat : MonoBehaviour
             Debug.LogWarning("[PlayerCombat] No MeleeHitbox found in children!");
         }
 #endif
+    }
+
+    private void Start()
+    {
+        SyncDodgeDurationWithAnimation();
+    }
+
+    private void OnValidate()
+    {
+        CalculateDodgeCurveArea();
+    }
+
+    private void SyncDodgeDurationWithAnimation()
+    {
+        if (currentAnimator == null || currentAnimator.runtimeAnimatorController == null) return;
+
+        foreach (AnimationClip clip in currentAnimator.runtimeAnimatorController.animationClips)
+        {
+            string clipName = clip.name.ToLower();
+            if (clipName.Contains("dash") || clipName.Contains("roll") || clipName.Contains("dodge"))
+            {
+                dodgeAnimationClipLength = clip.length;
+                break;
+            }
+        }
+    }
+
+    private void CalculateDodgeCurveArea()
+    {
+        dodgeCurveArea = 0f;
+        if (dodgeCurve == null)
+        {
+            dodgeCurveArea = 1f;
+            return;
+        }
+        
+        int steps = 20;
+        for (int i = 0; i < steps; i++)
+        {
+            float t1 = (float)i / steps;
+            float t2 = (float)(i + 1) / steps;
+            float v1 = dodgeCurve.Evaluate(t1);
+            float v2 = dodgeCurve.Evaluate(t2);
+            dodgeCurveArea += (v1 + v2) / 2f * (1f / steps);
+        }
+        
+        if (dodgeCurveArea <= 0.01f) dodgeCurveArea = 1f;
     }
 
     private void OnEnable()
@@ -98,6 +177,7 @@ public class PlayerCombat : MonoBehaviour
         comboTimer = 0f;
         currentComboFinishCooldownTimer = 0f;
         isDashing = false;
+        isDodging = false;
         wasAttacking = false;
 
         if (currentAnimator != null)
@@ -115,6 +195,7 @@ public class PlayerCombat : MonoBehaviour
         UpdateTimers(dt);
         UpdateCombatTargeting();
         HandleDash(dt);
+        HandleDodgeMovement(dt);
         HandleInput();
         ProcessInputBuffer();
         CheckComboTimeout();
@@ -159,12 +240,129 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
+    private void HandleDodgeMovement(float dt)
+    {
+        if (!isDodging) return;
+
+        currentDodgeTime += dt;
+
+        if (currentDodgeTime >= dodgeDuration)
+        {
+            isDodging = false;
+            if (currentAnimator != null)
+            {
+                currentAnimator.speed = originalAnimatorSpeed; // รีเซ็ตความเร็วกลับเป็นปกติ
+            }
+            return;
+        }
+
+        float normalizedTime = currentDodgeTime / dodgeDuration;
+        float force = dodgeCurve.Evaluate(normalizedTime);
+        Vector3 dodgeMovement = dodgeDirection * ((dodgeDistance / dodgeDuration) * (force / dodgeCurveArea) * dt);
+
+        if (currentController != null)
+        {
+            currentController.Move(dodgeMovement);
+        }
+    }
+
+    private void HandleDodgeInput()
+    {
+        if (!canDodge) return;
+        if (isDodging) return;
+
+        // เช็ค Input กด Dodge, เช็คคูลดาวน์ และต้องเหยียบพื้นอยู่ (สมมติว่าเช็ค isGrounded จาก CharacterController)
+        bool isGrounded = currentController != null ? currentController.isGrounded : true;
+
+        if (Input.GetKeyDown(dodgeKey) && dodgeCooldown.IsReady() && isGrounded)
+        {
+            if (IsAttacking) return; // ห้ามพุ่งตอนโจมตี
+
+            StartDodge();
+        }
+    }
+
+    private void StartDodge()
+    {
+        isDodging = true;
+        currentDodgeTime = 0f;
+        dodgeCooldown.StartCooldown();
+
+        // ปรับความเร็วของ Animator ให้แอนิเมชันเล่นจบพร้อมกับ dodgeDuration พอดี
+        if (currentAnimator != null)
+        {
+            originalAnimatorSpeed = currentAnimator.speed;
+            if (dodgeDuration > 0f && dodgeAnimationClipLength > 0f)
+            {
+                currentAnimator.speed = dodgeAnimationClipLength / dodgeDuration;
+            }
+        }
+
+        // คำนวณทิศทางพุ่งจาก Input WASD
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        Vector3 inputDir = new Vector3(h, 0f, v).normalized;
+
+        if (inputDir.sqrMagnitude >= 0.01f)
+        {
+            float cameraAngle = playermovement != null ? playermovement.GetCameraAngle() : currentBodyTransform.eulerAngles.y;
+            float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + cameraAngle;
+            dodgeDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            
+            currentBodyTransform.rotation = Quaternion.Euler(0f, targetAngle, 0f);
+        }
+        else
+        {
+            dodgeDirection = currentBodyTransform.forward;
+        }
+
+        // เปิด I-Frame ถ้ามี HealthSystem
+        if (currentHealthSystem != null)
+        {
+            currentHealthSystem.ActivateIFrame();
+        }
+
+        // ทริกเกอร์แอนิเมชัน
+        if (currentAnimator != null)
+        {
+            currentAnimator.SetTrigger(HashDodge);
+        }
+    }
+
     private void HandleInput()
     {
-        // สามารถต่อยอดไปใช้ Input System แทนได้โดยเรียกฟังก์ชัน BufferAttack() จากภายนอก
-        if (Input.GetMouseButtonDown(0))
+        // จัดการสถานะตั้งการ์ด (Block) - กดปุ่ม F ค้าง
+        bool blockInput = canBlock && Input.GetKey(KeyCode.F);
+        
+        // เงื่อนไข: จะตั้งการ์ดได้ต้องไม่กำลังโจมตี และไม่พุ่งตัวอยู่
+        bool isBlocking = blockInput && !IsAttacking && !isDashing && !isDodging;
+
+        if (currentAnimator != null)
         {
-            BufferAttack();
+            currentAnimator.SetBool(HashIsBlocking, isBlocking);
+        }
+
+        if (currentHealthSystem != null)
+        {
+            currentHealthSystem.IsBlocking = isBlocking;
+        }
+
+        // Handle Dodge Input
+        // (เฉพาะตอนที่เราสิงร่างอยู่เท่านั้น ถ้ามีตัวจัดการ Possession ให้เช็คที่นี่)
+        bool isPossessed = playermovement != null ? playermovement.isPossessed : true;
+        if (isPossessed)
+        {
+            HandleDodgeInput();
+        }
+
+        // สามารถต่อยอดไปใช้ Input System แทนได้โดยเรียกฟังก์ชัน BufferAttack() จากภายนอก
+        if (isPossessed && Input.GetMouseButtonDown(0))
+        {
+            // ถ้ากำลังตั้งการ์ดหรือหลบอยู่ ห้ามโจมตี
+            if (!isBlocking && !isDodging)
+            {
+                BufferAttack();
+            }
         }
     }
 

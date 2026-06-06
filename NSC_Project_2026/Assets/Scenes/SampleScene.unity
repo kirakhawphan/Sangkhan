@@ -3477,12 +3477,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: canBlock
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: aimOrigin
       value: 
       objectReference: {fileID: 330585546}
     - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: dashDistance
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: comboFinishCooldown
@@ -3660,11 +3664,11 @@ PrefabInstance:
       objectReference: {fileID: 330585546}
     - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: dashDistance
-      value: 20
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: dashDuration
-      value: 1
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: skillSlot2Key
@@ -3687,6 +3691,10 @@ PrefabInstance:
       value: 1.0047607
       objectReference: {fileID: 0}
     - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: canDash
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4687924974275122942, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: dashKey
       value: 113
       objectReference: {fileID: 0}
@@ -3707,8 +3715,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 7918690802805254927}
     - target: {fileID: 7265605888329472589, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: maxPoise
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 7265605888329472589, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: maxHealth
       value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 7265605888329472589, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: blockDamageMultiplier
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 8746380158766238901, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: m_LocalPosition.y
