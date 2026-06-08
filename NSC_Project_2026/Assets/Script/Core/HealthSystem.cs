@@ -23,6 +23,9 @@ public class HealthSystem : MonoBehaviour, IDamageable
     [SerializeField] private float blockDamageMultiplier = 0f;
     public bool IsBlocking { get; set; } = false;
 
+    // [เพิ่ม] สำหรับการโจมตีสวนกลับ (Counter Attack) หรือสถานะพิเศษที่ทำให้ไม่ติดชะงัก
+    public bool IsSuperArmorActive { get; set; } = false;
+
     public bool IsInvincible => iFrameTimer > 0f;
 
     // อีเวนต์สำหรับส่งค่า % เลือด (0.0 ถึง 1.0) ไปให้ UI หรือระบบอื่นที่ติดตามอยู่
@@ -148,7 +151,8 @@ public class HealthSystem : MonoBehaviour, IDamageable
         }
 
         // --- [เพิ่ม] ลอจิกระบบ Poise (ชะงัก) ---
-        // เช็คว่าถ้าเป็นผู้เล่นกำลังควบคุมร่างนี้อยู่ (isPossessed) จะได้รับ Super Armor ทันที (ไม่ชะงัก)
+        // เช็คว่ามี SuperArmor หรือเป็นผู้เล่นกำลังควบคุมร่างนี้อยู่ (isPossessed) จะได้รับ Super Armor ทันที (ไม่ชะงัก)
+        if (IsSuperArmorActive) return false;
         if (playerMovementCache != null && playerMovementCache.isPossessed) return false;
 
         // หักค่า Poise ปัจจุบันด้วยดาเมจ Poise ที่ได้รับ

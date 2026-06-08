@@ -35,9 +35,16 @@ public class EnemyBrain : MonoBehaviour
     public AttackState attackState { get; private set; }
     public StunnedState stunnedState { get; private set; }
     public CircleState circleState { get; private set; }
+    public CounterAttackState counterAttackState { get; private set; }
+    public AlertState alertState { get; private set; }      // [เพิ่ม] สถานะตกใจเห็นผู้เล่น
+    public B4AttackState b4AttackState { get; private set; } // [เพิ่ม] สถานะง้างก่อนตี
 
     // สถานะปัจจุบันที่ AI กำลังเป็นอยู่
     private IEnemyState currentState;
+    
+    // --- Counter Attack Data ---
+    private int currentHitCount = 0;
+    private float lastCounterTime = 0f;
     
     // [เพิ่ม] เปิดให้คลาสอื่นเช็คสถานะปัจจุบันได้
     public IEnemyState CurrentState => currentState;
@@ -65,6 +72,9 @@ public class EnemyBrain : MonoBehaviour
         attackState = new AttackState(this);
         stunnedState = new StunnedState(this, stunDuration);
         circleState = new CircleState(this);
+        counterAttackState = new CounterAttackState(this);
+        alertState = new AlertState(this);       // [เพิ่ม]
+        b4AttackState = new B4AttackState(this); // [เพิ่ม]
     }
 
     private void Start()
@@ -79,6 +89,7 @@ public class EnemyBrain : MonoBehaviour
         if (health == null) return;
         health.OnHurt += HandleHurt;
         health.OnDeath += HandleDeath;
+        health.OnDamageTaken += HandleDamageTaken; // [เพิ่ม] ติดตามการโดนโจมตีทุกครั้ง
     }
 
     // [เพิ่ม] ยกเลิกการสมัครเมื่อปิดใช้งาน ป้องกัน Memory Leak
@@ -139,11 +150,58 @@ public class EnemyBrain : MonoBehaviour
         if (health == null) return;
         health.OnHurt -= HandleHurt;
         health.OnDeath -= HandleDeath;
+        health.OnDamageTaken -= HandleDamageTaken;
+    }
+
+    // [เพิ่ม] เมื่อถูกโจมตี นับจำนวนครั้งเพื่อสวนกลับ
+    private void HandleDamageTaken(DamageInfo info)
+    {
+        if (data == null) return;
+
+        currentHitCount++;
+
+        // เช็คจำนวนครั้ง และ Cooldown
+        if (currentHitCount >= data.hitsToTriggerCounter)
+        {
+            if (Time.time >= lastCounterTime + data.counterAttackCooldown)
+            {
+                TriggerCounterAttack();
+            }
+        }
+    }
+
+    // [เพิ่ม] บังคับเริ่มสวนกลับ
+    private void TriggerCounterAttack()
+    {
+        // 1. บังคับยึดคิวโจมตี
+        CombatSlotManager.Instance?.ForceRequestSlot(this);
+
+        // 2. รีเซ็ตการนับและเวลา
+        currentHitCount = 0;
+        lastCounterTime = Time.time;
+
+        // 3. เปลี่ยน State เป็นสวนกลับ (Super Armor จะถูกเปิดใน Enter ของ CounterAttackState ทำให้การโจมตีครั้งนี้ไม่ติดชะงัก)
+        ChangeState(counterAttackState);
     }
 
     // [เพิ่ม] เมื่อเกราะแตก (Poise <= 0) สั่งเล่นแอนิเมชันชะงัก + กระเด็น + หยุด AI ชั่วคราว
+    //
+    // กฎการขัดจังหวะ (Interrupt Rules):
+    //   - AttackState:     ขัดไม่ได้เลย (กำลังตีจริงอยู่)
+    //   - B4AttackState:   ขัดได้ (กำลังง้างอยู่) ยกเว้นมี SuperArmor
+    //   - CounterAttackState: ขัดไม่ได้ (มี SuperArmor อยู่แล้ว)
+    //   - อื่นๆ:           ขัดได้ปกติ
     private void HandleHurt(Vector3 knockbackForce)
     {
+        // [กฎ] ถ้ากำลังตีจริงอยู่ (AttackState) → ขัดไม่ได้เด็ดขาด
+        if (currentState == attackState) return;
+
+        // [กฎ] ถ้ากำลังง้างอยู่ (B4AttackState) แต่มี SuperArmor → ขัดไม่ได้
+        if (currentState == b4AttackState && health != null && health.IsSuperArmorActive) return;
+
+        // [กฎ] ถ้า CounterAttack (มี SuperArmor) → ขัดไม่ได้ (HealthSystem จะไม่ยิง OnHurt อยู่แล้ว แต่ใส่ Safety Net ไว้)
+        if (currentState == counterAttackState) return;
+
         if (animator != null) animator.SetTrigger("Hurt");
 
         // คืนบัตรคิวทันทีเมื่อโดน Stun (เพื่อให้ศัตรูที่รออยู่ได้รับโอกาสโจมตีแทน)

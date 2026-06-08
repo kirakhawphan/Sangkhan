@@ -60,6 +60,31 @@ public class CombatSlotManager : MonoBehaviour
     }
 
     /// <summary>
+    /// [เพิ่ม] บังคับแทรกคิว (ใช้สำหรับ Counter Attack)
+    /// ถ้าคิวเต็มอยู่ จะเตะตัวแรกสุดที่กำลังตีให้ออกไป เพื่อไม่ให้รุมผู้เล่นเยอะเกิน
+    /// </summary>
+    public void ForceRequestSlot(EnemyBrain requester)
+    {
+        if (requester == null) return;
+        if (_currentAttackers.Contains(requester)) return;
+
+        // ถ้าคิวเต็ม ให้เตะตัวแรกออกไป (ตัวที่รุมอยู่ก่อน)
+        if (_currentAttackers.Count >= maxMeleeSlots && _currentAttackers.Count > 0)
+        {
+            EnemyBrain victim = _currentAttackers[0];
+            _currentAttackers.RemoveAt(0);
+
+            // บังคับให้ตัวที่โดนแย่งคิว ถอยกลับไปดูเชิง
+            if (victim != null && victim.circleState != null)
+            {
+                victim.ChangeState(victim.circleState);
+            }
+        }
+        
+        _currentAttackers.Add(requester);
+    }
+
+    /// <summary>
     /// คืนบัตรคิวกลับมาให้ระบบ (เรียกเมื่อโจมตีเสร็จ, โดน Stun, หรือตาย)
     /// </summary>
     public void ReleaseSlot(EnemyBrain requester)

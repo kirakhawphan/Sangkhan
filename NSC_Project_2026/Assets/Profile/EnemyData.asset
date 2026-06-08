@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7ab1751cca0ca841b0d85a6301804f4, type: 3}
+  m_Name: EnemyData
+  m_EditorClassIdentifier: 
+  enemyName: Unknown Enemy
+  maxHealth: 100
+  maxPoise: 20
+  idleSpeed: 3.5
+  chaseSpeed: 6
+  strafeSpeed: 2
+  stoppingDistance: 1
+  rotationSpeed: 20
+  keepDistance: 0
+  retreatDistance: 2.5
+  retreatMultiplier: 2
+  attackRange: 2
+  attackCooldown: 2
+  comboStep: 1
+  normalAttackLockTime: 0.5
+  finishAttackLockTime: 1
+  attackAnimationTime: 1.2
+  hitsToTriggerCounter: 3
+  counterAttackCooldown: 5
+  stunDuration: 0.8
+  circleRadius: 8
+  tooCloseDistance: 2.5
+  retryInterval: 1.2
+  strafeChangeDuration: 2.5
+  detectionRange: 10
+  aimRadius: 1.5

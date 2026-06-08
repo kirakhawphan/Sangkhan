@@ -28,8 +28,15 @@ public class EnemyData : ScriptableObject
     public float finishAttackLockTime = 1f;
     public float attackAnimationTime = 1.2f;
 
+    [Header("Counter Attack")]
+    public int hitsToTriggerCounter = 3;
+    public float counterAttackCooldown = 5f;
+
     [Header("AI Behavior")]
     public float stunDuration = 0.8f;
+    public float alertDuration = 0.8f;
+    [Tooltip("ระยะเวลาง้างอาวุธก่อนโจมตีจริง (วินาที)")]
+    public float b4AttackDelay = 0.5f;
     public float circleRadius = 8f;
     public float tooCloseDistance = 2.5f;
     public float retryInterval = 1.2f;

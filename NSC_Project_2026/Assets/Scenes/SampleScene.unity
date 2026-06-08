@@ -1270,6 +1270,18 @@ PrefabInstance:
       propertyPath: profile
       value: 
       objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
+    - target: {fileID: 1157407118677752159, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d34ac3ff0f634d543883ce940075accb, type: 2}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canBlock
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canDodge
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: aimOrigin
       value: 
@@ -1330,6 +1342,10 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 50
       objectReference: {fileID: 0}
+    - target: {fileID: 7822238004104155648, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: data
+      value: 
+      objectReference: {fileID: 11400000, guid: 14e51fcf794a84d4bb95133282a29eba, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2318,6 +2334,18 @@ PrefabInstance:
       propertyPath: profile
       value: 
       objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
+    - target: {fileID: 1157407118677752159, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d34ac3ff0f634d543883ce940075accb, type: 2}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canBlock
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canDodge
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: aimOrigin
       value: 
@@ -2378,6 +2406,10 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 50
       objectReference: {fileID: 0}
+    - target: {fileID: 7822238004104155648, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: data
+      value: 
+      objectReference: {fileID: 11400000, guid: 14e51fcf794a84d4bb95133282a29eba, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2679,6 +2711,18 @@ PrefabInstance:
       propertyPath: profile
       value: 
       objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
+    - target: {fileID: 1157407118677752159, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d34ac3ff0f634d543883ce940075accb, type: 2}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canBlock
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canDodge
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: aimOrigin
       value: 
@@ -2739,6 +2783,10 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 50
       objectReference: {fileID: 0}
+    - target: {fileID: 7822238004104155648, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: data
+      value: 
+      objectReference: {fileID: 11400000, guid: 14e51fcf794a84d4bb95133282a29eba, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3094,6 +3142,18 @@ PrefabInstance:
       propertyPath: profile
       value: 
       objectReference: {fileID: 11400000, guid: 67215bdeb25a7534dbb60e311cb7b7fd, type: 2}
+    - target: {fileID: 1157407118677752159, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d34ac3ff0f634d543883ce940075accb, type: 2}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canBlock
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canDodge
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: aimOrigin
       value: 
@@ -3154,6 +3214,10 @@ PrefabInstance:
       propertyPath: maxHealth
       value: 50
       objectReference: {fileID: 0}
+    - target: {fileID: 7822238004104155648, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: data
+      value: 
+      objectReference: {fileID: 11400000, guid: 14e51fcf794a84d4bb95133282a29eba, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3481,12 +3545,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
+      propertyPath: canDodge
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: aimOrigin
       value: 
       objectReference: {fileID: 330585546}
     - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: dashDistance
-      value: 1
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5086073195683201866, guid: 03ab39b5f7f49ec43aa97442f658add3, type: 3}
       propertyPath: comboFinishCooldown
@@ -3553,10 +3621,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1669778479}
     m_Modifications:
+    - target: {fileID: 1157407118677752159, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d34ac3ff0f634d543883ce940075accb, type: 2}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canBlock
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: canDodge
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: aimOrigin
       value: 
       objectReference: {fileID: 330585546}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: dashDistance
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4585571422980009415, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: comboFinishCooldown
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5111518991855543077, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
       propertyPath: m_LocalPosition.x
       value: 971.4105
@@ -3601,6 +3689,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Enemy1
       objectReference: {fileID: 0}
+    - target: {fileID: 7822238004104155648, guid: 5d38304846d768f4fabd83e02cf1d341, type: 3}
+      propertyPath: data
+      value: 
+      objectReference: {fileID: 11400000, guid: 14e51fcf794a84d4bb95133282a29eba, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3657,6 +3749,14 @@ PrefabInstance:
     - target: {fileID: 1086987425130691850, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: m_Name
       value: Enemy Giant
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: canBlock
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
+      propertyPath: canDodge
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3959532241571622457, guid: 817f66b4e685fde45aa009217ccceef3, type: 3}
       propertyPath: aimOrigin

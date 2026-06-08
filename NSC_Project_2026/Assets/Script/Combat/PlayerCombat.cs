@@ -337,7 +337,7 @@ public class PlayerCombat : MonoBehaviour
         // เงื่อนไข: จะตั้งการ์ดได้ต้องไม่กำลังโจมตี และไม่พุ่งตัวอยู่
         bool isBlocking = blockInput && !IsAttacking && !isDashing && !isDodging;
 
-        if (currentAnimator != null)
+        if (canBlock && currentAnimator != null)
         {
             currentAnimator.SetBool(HashIsBlocking, isBlocking);
         }

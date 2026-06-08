@@ -281,6 +281,14 @@ public class Playermovement : MonoBehaviour
             {
                 horizontal = Input.GetAxisRaw("Horizontal");
                 vertical = Input.GetAxisRaw("Vertical");
+
+                // ให้ตัวละครหันตามกล้องตลอดเวลาแบบค่อยๆ หมุน (Smooth)
+                if (cameraTransform != null)
+                {
+                    float targetAngle = cameraTransform.eulerAngles.y;
+                    float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+                    transform.rotation = Quaternion.Euler(0f, angle, 0f);
+                }
             }
             
             inputDirection.x = horizontal;
@@ -290,11 +298,18 @@ public class Playermovement : MonoBehaviour
 
             if (inputDirection.sqrMagnitude >= 0.01f)
             {
-                float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + (cameraTransform != null ? cameraTransform.eulerAngles.y : transform.eulerAngles.y);
-                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-                transform.rotation = Quaternion.Euler(0f, angle, 0f);
-
-                moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+                // คำนวณทิศทางการเดินอิงจากกล้อง
+                if (cameraTransform != null)
+                {
+                    moveDirection = cameraTransform.right * inputDirection.x + cameraTransform.forward * inputDirection.z;
+                }
+                else
+                {
+                    moveDirection = transform.right * inputDirection.x + transform.forward * inputDirection.z;
+                }
+                
+                moveDirection.y = 0f;
+                moveDirection.Normalize();
                 
                 // ปรับความเร็วถ้ากำลังตั้งการ์ด
                 bool isBlocking = playerHealthSystem != null && playerHealthSystem.IsBlocking;
@@ -307,7 +322,7 @@ public class Playermovement : MonoBehaviour
                     currentSpeed *= blockSpeedMultiplier;
                 }
 
-                controller.Move(moveDirection.normalized * currentSpeed * Time.deltaTime);
+                controller.Move(moveDirection * currentSpeed * Time.deltaTime);
 
                 if (animator != null)
                 {
