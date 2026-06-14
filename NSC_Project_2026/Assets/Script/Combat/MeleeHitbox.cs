@@ -29,10 +29,27 @@ public class MeleeHitbox : MonoBehaviour
     // ฟังก์ชันนี้ถูกเรียกเมื่อเราทำการโจมตี (อาจเรียกผ่าน Animation Event, State Machine หรือ Input)
     public bool PerformAttack()
     {
+        return PerformAttack(null);
+    }
+
+    /// <summary>
+    /// เวอร์ชันที่รับ List กันซ้ำจากภายนอก เพื่อป้องกันหลาย Hitbox ตีเป้าหมายเดียวกันซ้ำ
+    /// </summary>
+    public bool PerformAttack(System.Collections.Generic.List<IDamageable> sharedExclusions)
+    {
         if (attackPoint == null) return false;
 
         // ล้างข้อมูลเป้าหมายที่เคยฟันในรอบนี้ก่อนเริ่ม (Zero GC)
         damagedTargets.Clear();
+
+        // ถ้ามี List กันซ้ำจากภายนอก ให้เอาเป้าหมายที่ Hitbox อื่นตีไปแล้วมาใส่ไว้ก่อน
+        if (sharedExclusions != null)
+        {
+            for (int i = 0; i < sharedExclusions.Count; i++)
+            {
+                damagedTargets.Add(sharedExclusions[i]);
+            }
+        }
 
         // ใช้ OverlapSphereNonAlloc แทน OverlapSphere ธรรมดา
         // คำสั่งนี้จะนำผลลัพธ์ไปใส่ไว้ใน hitResults (ที่เราจองพื้นที่ไว้แล้ว) และคืนค่าจำนวนที่โดนจริงๆ กลับมา
@@ -61,6 +78,7 @@ public class MeleeHitbox : MonoBehaviour
             {
                 // เพิ่มเป้าหมายนี้เข้าไปใน List ป้องกันการโดนซ้ำในเฟรมเดียวกัน
                 damagedTargets.Add(targetDamageable);
+                if (sharedExclusions != null) sharedExclusions.Add(targetDamageable);
                 hasHitTarget = true;
 #if UNITY_EDITOR
                 Debug.Log($"   => ฟันเข้าเป้า! ส่งดาเมจไปที่ '{col.gameObject.name}'");

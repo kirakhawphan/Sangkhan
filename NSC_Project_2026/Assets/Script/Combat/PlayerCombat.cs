@@ -470,18 +470,22 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
+    // [เพิ่ม] ลิสต์กันซ้ำที่ใช้ร่วมกันระหว่าง Hitbox ทุกตัว (จองครั้งเดียว Zero GC)
+    private readonly System.Collections.Generic.List<IDamageable> sharedDamagedTargets = new System.Collections.Generic.List<IDamageable>(10);
+
     public void AE_TriggerWeaponAttack()
     {
         if (currentWeaponHitboxes == null || currentWeaponHitboxes.Length == 0) return;
 
         bool anyHit = false;
+        sharedDamagedTargets.Clear();
 
         // Zero GC: for loop แทน foreach
         for (int i = 0; i < currentWeaponHitboxes.Length; i++)
         {
             if (currentWeaponHitboxes[i] != null)
             {
-                if (currentWeaponHitboxes[i].PerformAttack())
+                if (currentWeaponHitboxes[i].PerformAttack(sharedDamagedTargets))
                 {
                     anyHit = true;
                 }

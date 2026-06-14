@@ -69,7 +69,8 @@ public class Playermovement : MonoBehaviour
     private float calculatedJumpVelocity;
     
     // แคช Animator Parameters เป็น Hash (int) เพื่อหลีกเลี่ยงการจอง String (Zero String Allocation)
-    private readonly int speedHash = Animator.StringToHash("Speed");
+    private readonly int inputXHash = Animator.StringToHash("InputX");
+    private readonly int inputYHash = Animator.StringToHash("InputY");
     private readonly int isGroundedHash = Animator.StringToHash("IsGrounded");
     private readonly int jumpHash = Animator.StringToHash("Jump");
 
@@ -269,7 +270,8 @@ public class Playermovement : MonoBehaviour
             // แจ้ง Animator ให้รู้ว่าไม่ได้เดินปกติ
             if (animator != null)
             {
-                animator.SetFloat(speedHash, 0f, 0.1f, Time.deltaTime);
+                animator.SetFloat(inputXHash, 0f, 0.1f, Time.deltaTime);
+                animator.SetFloat(inputYHash, 0f, 0.1f, Time.deltaTime);
             }
         }
         else
@@ -314,7 +316,7 @@ public class Playermovement : MonoBehaviour
                 // ปรับความเร็วถ้ากำลังตั้งการ์ด
                 bool isBlocking = playerHealthSystem != null && playerHealthSystem.IsBlocking;
                 
-                isSprintingNow = Input.GetKey(KeyCode.LeftShift) && !isBlocking;
+                isSprintingNow = Input.GetKey(KeyCode.LeftShift) && !isBlocking && vertical > 0;
                 
                 float currentSpeed = isSprintingNow ? runSpeed : moveSpeed;
                 if (isBlocking)
@@ -326,15 +328,33 @@ public class Playermovement : MonoBehaviour
 
                 if (animator != null)
                 {
-                    float speedParam = isSprintingNow ? 1f : 0.5f;
-                    animator.SetFloat(speedHash, speedParam, 0.1f, Time.deltaTime);
+                    float multiplier = isSprintingNow ? 1f : 0.5f;
+                    
+                    float animX = inputDirection.x;
+                    float animZ = inputDirection.z;
+
+                    // ถ้ากำลังเดินถอยหลังเฉียง ให้เฉลี่ยน้ำหนักไปทางถอยหลัง (Z) ประมาณ 70% ตามที่ต้องการ
+                    if (animZ < -0.1f && Mathf.Abs(animX) > 0.1f)
+                    {
+                        // บีบค่า X ลง เพื่อให้องศาการ Blend เอียงไปหาท่าเดินถอยหลัง (แกน Z) มากกว่าท่าเดินซ้าย/ขวา
+                        animX *= 0.45f; 
+                        
+                        // ปรับ Normalize กลับเพื่อให้ความยาวเวกเตอร์เท่าเดิม (กันท่า Idle ผสม)
+                        Vector2 skewed = new Vector2(animX, animZ).normalized;
+                        animX = skewed.x;
+                        animZ = skewed.y;
+                    }
+
+                    animator.SetFloat(inputXHash, animX * multiplier, 0.1f, Time.deltaTime);
+                    animator.SetFloat(inputYHash, animZ * multiplier, 0.1f, Time.deltaTime);
                 }
             }
             else
             {
                 if (animator != null)
                 {
-                    animator.SetFloat(speedHash, 0f, 0.1f, Time.deltaTime);
+                    animator.SetFloat(inputXHash, 0f, 0.1f, Time.deltaTime);
+                    animator.SetFloat(inputYHash, 0f, 0.1f, Time.deltaTime);
                 }
             }
         }

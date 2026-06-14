@@ -138,9 +138,6 @@ public class HealthSystem : MonoBehaviour, IDamageable
         // ยิงอีเวนต์แจ้งรายละเอียดดาเมจ (สำหรับ CameraShake, HitFlash และอื่นๆ)
         OnDamageTaken?.Invoke(info);
 
-        // [เพิ่ม] เปิด I-Frame เมื่อรับดาเมจ
-        ActivateIFrame();
-
         // ตรวจสอบการตาย
         if (currentHealth <= 0f)
         {
