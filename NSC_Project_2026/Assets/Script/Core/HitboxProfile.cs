@@ -19,4 +19,11 @@ public class HitboxProfile : ScriptableObject
     [Header("Game Feel Settings (Hit Impact)")]
     [Tooltip("โปรไฟล์ความแรงของการกระทบ (สั่นกล้อง, Hit Stop) เฉพาะของท่าโจมตีนี้")]
     public ImpactProfile impactProfile;
+
+    [Header("VFX Settings")]
+    [Tooltip("พาร์ทิเคิลเอฟเฟกต์ตอนตีโดน (จะเกิดตรงจุดที่ปะทะพอดี)")]
+    public GameObject hitEffectPrefab;
+    
+    [Tooltip("ตัวคูณขนาดของเอฟเฟกต์ (1 = ขนาดปกติ, 0.5 = เล็กลงครึ่งนึง, 2 = ใหญ่เป็นสองเท่า)")]
+    public float hitEffectScale = 1f;
 }

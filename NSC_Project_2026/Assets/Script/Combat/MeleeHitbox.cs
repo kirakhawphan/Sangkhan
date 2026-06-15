@@ -27,15 +27,15 @@ public class MeleeHitbox : MonoBehaviour
     }
 
     // ฟังก์ชันนี้ถูกเรียกเมื่อเราทำการโจมตี (อาจเรียกผ่าน Animation Event, State Machine หรือ Input)
-    public bool PerformAttack()
+    public bool PerformAttack(float damageMultiplier = 1f)
     {
-        return PerformAttack(null);
+        return PerformAttack(null, damageMultiplier);
     }
 
     /// <summary>
     /// เวอร์ชันที่รับ List กันซ้ำจากภายนอก เพื่อป้องกันหลาย Hitbox ตีเป้าหมายเดียวกันซ้ำ
     /// </summary>
-    public bool PerformAttack(System.Collections.Generic.List<IDamageable> sharedExclusions)
+    public bool PerformAttack(System.Collections.Generic.List<IDamageable> sharedExclusions, float damageMultiplier = 1f)
     {
         if (attackPoint == null) return false;
 
@@ -121,17 +121,30 @@ public class MeleeHitbox : MonoBehaviour
                 // สร้าง DamageInfo ในรูปแบบของ Struct (ไม่มีการ Alloc Memory บน Heap = Zero GC)
                 DamageInfo info = new DamageInfo
                 {
-                    damageAmount = profile.attackDamage,
-                    poiseDamage = profile.poiseDamage,
+                    damageAmount = profile.attackDamage * damageMultiplier,
+                    poiseDamage = profile.poiseDamage * damageMultiplier,
                     damageType = profile.damageType, // ส่งประเภทดาเมจที่ตั้งไว้ไปให้เป้าหมาย
                     hitPoint = col.ClosestPoint(attackPoint.position), // หาจุดที่ใกล้ที่สุดบน Collider เพื่อเล่นเอฟเฟกต์
-                    knockbackForce = knockbackDir * profile.knockbackPower,
+                    knockbackForce = knockbackDir * (profile.knockbackPower * damageMultiplier),
                     attacker = this.gameObject,
                     impactProfile = activeProfile // [เพิ่ม] แนบ Profile (รวมถึงโปรไฟล์ผู้เล่นครอบทับ) ไปกับดาเมจด้วย
                 };
 
                 // ส่งคำสั่ง TakeDamage ให้กับเป้าหมายที่ถูกตี (คืนค่า true หากตีจน Poise แตก)
                 bool poiseBroken = targetDamageable.TakeDamage(info);
+
+                // [เพิ่ม] เล่นเอฟเฟกต์ VFX ตอนตีโดน
+                if (profile.hitEffectPrefab != null)
+                {
+                    // เกิดตรงจุดที่ปะทะพอดี และหันหน้าไปทางทิศทางกระเด็น
+                    GameObject vfx = Instantiate(profile.hitEffectPrefab, info.hitPoint, Quaternion.LookRotation(knockbackDir));
+                    
+                    // ปรับขนาดของเอฟเฟกต์ตามที่ตั้งไว้ใน Profile
+                    if (profile.hitEffectScale != 1f)
+                    {
+                        vfx.transform.localScale = Vector3.one * profile.hitEffectScale;
+                    }
+                }
 
                 // หากคนตีคือตัวละครที่ผู้เล่นควบคุมอยู่ ให้ส่งสัญญาณการสั่นกล้อง/FOV ขาตี (Attacker Feedback)
 #if UNITY_EDITOR

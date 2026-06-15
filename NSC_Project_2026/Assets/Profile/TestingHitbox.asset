@@ -17,3 +17,4 @@ MonoBehaviour:
   damageType: 0
   knockbackPower: 0
   impactProfile: {fileID: 0}
+  hitEffectPrefab: {fileID: 3946140628572098603, guid: 230d5948f7f21664b8286d5fc398b986, type: 3}

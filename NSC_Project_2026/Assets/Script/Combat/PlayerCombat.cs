@@ -3,18 +3,16 @@ using System;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("Combo Settings")]
-    [SerializeField] private int maxComboStep = 3;
+    [Header("Light Attack Settings")]
+    [SerializeField] private int maxLightComboStep = 3;
+    [SerializeField] private float lightAttackCooldown = 0.3f;
+    [SerializeField] private float lightComboResetTime = 1.0f;
+    [SerializeField] private float lightComboFinishCooldown = 1.5f;
+    [Tooltip("ล็อคการเดินตอนต่อยธรรมดา")] [SerializeField] private float lightAttackLockTime = 0.3f;
+    [Tooltip("ล็อคการเดินตอนจบคอมโบ")] [SerializeField] private float lightFinishAttackLockTime = 0.6f;
+
+    [Header("Global Combat Settings")]
     [SerializeField] private float inputBufferTime = 0.2f;
-
-    [Header("Cooldowns")]
-    [SerializeField] private float attackCooldown = 0.3f;
-    [SerializeField] private float comboResetTime = 1.0f;
-    [SerializeField] private float comboFinishCooldown = 1.5f;
-
-    [Header("Combo Window Options")]
-    [Tooltip("ผู้เล่นสามารถกดตีครั้งถัดไปล่วงหน้าได้นานแค่ไหน")] [SerializeField] private float normalAttackLockTime = 0.3f;
-    [SerializeField] private float finishAttackLockTime = 0.6f;
 
     [Header("Miss Penalty")]
     [SerializeField] private float missRecoveryPenalty = 0.2f;
@@ -78,13 +76,21 @@ public class PlayerCombat : MonoBehaviour
 
     // --- Combo State ---
     private int currentComboStep;
+    private int currentComboPath; // เก็บประวัติคอมโบ เช่น เบา-เบา-หนัก = 112
+    public int CurrentComboPath => currentComboPath; // เปิดให้อ่านค่า
+    
+    // [เพิ่ม] จดจำประวัติคอมโบในอดีต (เช่น 111, 112, 22) เพื่อให้ศัตรูนำไปประมวลผลต่อ
+    public System.Collections.Generic.List<int> comboHistory = new System.Collections.Generic.List<int>();
+
     private bool wasAttacking; // สำหรับเช็คการเปลี่ยน state เพื่อยิง Event
 
     public bool IsAttacking => currentMovementLockTimer > 0f;
 
     // Zero GC: Cached Animator Hashes
     private static readonly int HashComboStep = Animator.StringToHash("ComboStep");
-    private static readonly int HashAttack = Animator.StringToHash("Attack");
+    private static readonly int HashComboPath = Animator.StringToHash("ComboPath"); // [นำกลับมา] ส่งรหัสคอมโบไป Animator เผื่อทำท่าสูตร
+    private static readonly int HashAttack = Animator.StringToHash("Attack"); // Trigger ตีซ้าย
+    private static readonly int HashHeavyAttack = Animator.StringToHash("HeavyAttack"); // Trigger ตีขวา
     private static readonly int HashIsBlocking = Animator.StringToHash("IsBlocking");
     private static readonly int HashDodge = Animator.StringToHash("Dash");
 
@@ -171,6 +177,7 @@ public class PlayerCombat : MonoBehaviour
     private void ResetCombatState()
     {
         currentComboStep = 0;
+        currentComboPath = 0;
         currentBufferTimer = 0f;
         currentAttackCooldownTimer = 0f;
         currentMovementLockTimer = 0f;
@@ -183,6 +190,7 @@ public class PlayerCombat : MonoBehaviour
         if (currentAnimator != null)
         {
             currentAnimator.SetInteger(HashComboStep, 0);
+            currentAnimator.SetInteger(HashComboPath, 0);
         }
     }
 
@@ -364,6 +372,15 @@ public class PlayerCombat : MonoBehaviour
                 BufferAttack();
             }
         }
+
+        // [เพิ่ม] คลิกขวาโจมตีหนัก (สามารถร่ายได้ทุกสเต็ป เพื่อใช้เป็นท่าปิดคอมโบ)
+        if (isPossessed && Input.GetMouseButtonDown(1))
+        {
+            if (!isBlocking && !isDodging)
+            {
+                BufferHeavyAttack();
+            }
+        }
     }
 
     /// <summary>
@@ -372,6 +389,13 @@ public class PlayerCombat : MonoBehaviour
     public void BufferAttack()
     {
         currentBufferTimer = inputBufferTime;
+        isHeavyAttackingBuffer = false;
+    }
+
+    public void BufferHeavyAttack()
+    {
+        currentBufferTimer = inputBufferTime;
+        isHeavyAttackingBuffer = true;
     }
 
     private void ProcessInputBuffer()
@@ -381,16 +405,26 @@ public class PlayerCombat : MonoBehaviour
         if (currentComboFinishCooldownTimer > 0f) return;
         if (!IsGrounded()) return;
 
-        ExecuteAttack();
+        ExecuteAttack(isHeavyAttackingBuffer);
     }
 
-    private void ExecuteAttack()
+    private void ExecuteAttack(bool isHeavy)
     {
         currentBufferTimer = 0f;
+        isHeavyAttackingBuffer = false; // เคลียร์ buffer
 
-        if (currentComboStep >= maxComboStep)
+        int maxStep = isHeavy ? maxHeavyComboStep : maxLightComboStep;
+
+        if (currentComboStep >= maxStep)
         {
+            // บันทึกประวัติก่อนเริ่มคอมโบใหม่ (ถ้ามีการกดโจมตีต่อเนื่องโดยไม่รอ timeout)
+            if (currentComboPath > 0)
+            {
+                comboHistory.Add(currentComboPath);
+                if (comboHistory.Count > 10) comboHistory.RemoveAt(0);
+            }
             currentComboStep = 0;
+            currentComboPath = 0;
         }
 
         isDashing = true;
@@ -399,21 +433,40 @@ public class PlayerCombat : MonoBehaviour
         RotateTowardsTarget();
 
         currentComboStep++;
+        // 1 = ตีเบา, 2 = ตีหนัก
+        currentComboPath = (currentComboPath * 10) + (isHeavy ? 2 : 1);
 
+        // ส่ง ComboStep เผื่อเอาไว้ใช้ (แต่ตัวหลักคือ Trigger)
         currentAnimator.SetInteger(HashComboStep, currentComboStep);
-        currentAnimator.SetTrigger(HashAttack);
+        
+        // [นำกลับมา] ส่ง ComboPath เผื่อเอาไว้ทำ "ท่าพิเศษตามสูตร" จาก AnyState
+        currentAnimator.SetInteger(HashComboPath, currentComboPath);
 
-        if (currentComboStep >= maxComboStep)
+        // แยก Trigger ตามคลิกซ้าย/ขวา (สไตล์ DMC State-to-State)
+        if (isHeavy)
         {
-            currentComboFinishCooldownTimer = comboFinishCooldown;
-            currentMovementLockTimer = finishAttackLockTime; 
-            comboTimer = comboFinishCooldown; 
+            currentAnimator.SetTrigger(HashHeavyAttack);
         }
         else
         {
-            currentAttackCooldownTimer = attackCooldown;
-            currentMovementLockTimer = normalAttackLockTime;
-            comboTimer = comboResetTime;
+            currentAnimator.SetTrigger(HashAttack);
+        }
+
+        if (currentComboStep >= maxStep)
+        {
+            currentComboFinishCooldownTimer = lightComboFinishCooldown;
+            currentMovementLockTimer = isHeavy ? heavyAttackLockTime : lightFinishAttackLockTime; 
+            comboTimer = lightComboFinishCooldown; 
+            
+            // จบคอมโบสมบูรณ์ บันทึกลงประวัติทันที
+            comboHistory.Add(currentComboPath);
+            if (comboHistory.Count > 10) comboHistory.RemoveAt(0);
+        }
+        else
+        {
+            currentAttackCooldownTimer = isHeavy ? heavyAttackCooldown : lightAttackCooldown;
+            currentMovementLockTimer = isHeavy ? heavyAttackLockTime : lightAttackLockTime;
+            comboTimer = lightComboResetTime;
         }
 
         // Trigger Event สำหรับสคริปต์ภายนอก
@@ -449,14 +502,24 @@ public class PlayerCombat : MonoBehaviour
         if (currentComboStep == 0) return;
         if (comboTimer > 0f) return;
 
-        bool isMaxComboFinish = (currentComboStep >= maxComboStep);
+        // ถือว่าจบคอมโบเมื่อถึง Max ของฝั่งไหนก็ตาม (กันบั๊กกรณีสลับไปมา)
+        bool isMaxComboFinish = (currentComboStep >= maxLightComboStep) || (currentComboStep >= maxHeavyComboStep);
+
+        // [เพิ่ม] บันทึกประวัติก่อนรีเซ็ตเมื่อเกิด Timeout
+        if (currentComboPath > 0 && !comboHistory.Contains(currentComboPath) && currentComboStep < maxLightComboStep && currentComboStep < maxHeavyComboStep)
+        {
+            comboHistory.Add(currentComboPath);
+            if (comboHistory.Count > 10) comboHistory.RemoveAt(0);
+        }
 
         currentComboStep = 0;
+        currentComboPath = 0;
         currentAnimator.SetInteger(HashComboStep, 0);
+        currentAnimator.SetInteger(HashComboPath, 0); // รีเซ็ตสูตร
 
         if (!isMaxComboFinish)
         {
-            currentComboFinishCooldownTimer = comboFinishCooldown;
+            currentComboFinishCooldownTimer = lightComboFinishCooldown;
         }
     }
 
@@ -470,10 +533,28 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
+    // --- Heavy Attack ---
+    private bool isHeavyAttackingBuffer;
+    [Header("Heavy Attack Settings")]
+    [SerializeField] private int maxHeavyComboStep = 3;
+    [SerializeField] private float heavyAttackCooldown = 1.0f;
+    [SerializeField] private float heavyAttackLockTime = 0.8f;
+    [SerializeField] private float heavyDamageMultiplier = 2.0f;
+
     // [เพิ่ม] ลิสต์กันซ้ำที่ใช้ร่วมกันระหว่าง Hitbox ทุกตัว (จองครั้งเดียว Zero GC)
     private readonly System.Collections.Generic.List<IDamageable> sharedDamagedTargets = new System.Collections.Generic.List<IDamageable>(10);
 
     public void AE_TriggerWeaponAttack()
+    {
+        ExecuteHitboxes(1f);
+    }
+
+    public void AE_TriggerHeavyAttack()
+    {
+        ExecuteHitboxes(heavyDamageMultiplier);
+    }
+
+    private void ExecuteHitboxes(float damageMultiplier)
     {
         if (currentWeaponHitboxes == null || currentWeaponHitboxes.Length == 0) return;
 
@@ -485,7 +566,7 @@ public class PlayerCombat : MonoBehaviour
         {
             if (currentWeaponHitboxes[i] != null)
             {
-                if (currentWeaponHitboxes[i].PerformAttack(sharedDamagedTargets))
+                if (currentWeaponHitboxes[i].PerformAttack(sharedDamagedTargets, damageMultiplier))
                 {
                     anyHit = true;
                 }
@@ -497,7 +578,7 @@ public class PlayerCombat : MonoBehaviour
             currentMovementLockTimer += missRecoveryPenalty;
             currentAttackCooldownTimer += missRecoveryPenalty;
             
-            if (currentComboStep >= maxComboStep)
+            if (currentComboStep >= maxLightComboStep || currentComboStep >= maxHeavyComboStep)
             {
                 currentComboFinishCooldownTimer += missRecoveryPenalty;
             }

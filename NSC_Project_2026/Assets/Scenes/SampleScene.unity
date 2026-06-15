@@ -3573,6 +3573,10 @@ PrefabInstance:
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 330585546}
+    - target: {fileID: 3401606307486566266, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 70c9a26e08b71c64c927e3d4ccd470eb, type: 2}
     - target: {fileID: 3601394313236164470, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
       propertyPath: attackPoint
       value: 
@@ -3602,8 +3606,16 @@ PrefabInstance:
       value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 6259341370183513764, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
+      propertyPath: maxLightComboStep
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6259341370183513764, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
       propertyPath: comboFinishCooldown
       value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6259341370183513764, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
+      propertyPath: lightAttackCooldown
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 6259341370183513764, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
       propertyPath: finishAttackLockTime
