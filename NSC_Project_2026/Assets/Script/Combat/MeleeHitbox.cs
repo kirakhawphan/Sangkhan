@@ -124,7 +124,7 @@ public class MeleeHitbox : MonoBehaviour
                     damageAmount = profile.attackDamage * damageMultiplier,
                     poiseDamage = profile.poiseDamage * damageMultiplier,
                     damageType = profile.damageType, // ส่งประเภทดาเมจที่ตั้งไว้ไปให้เป้าหมาย
-                    hitPoint = col.ClosestPoint(attackPoint.position), // หาจุดที่ใกล้ที่สุดบน Collider เพื่อเล่นเอฟเฟกต์
+                    hitPoint = attackPoint.position, // [ปรับแก้] เปลี่ยนมาใช้จุดกึ่งกลางของ Hitbox แทน
                     knockbackForce = knockbackDir * (profile.knockbackPower * damageMultiplier),
                     attacker = this.gameObject,
                     impactProfile = activeProfile // [เพิ่ม] แนบ Profile (รวมถึงโปรไฟล์ผู้เล่นครอบทับ) ไปกับดาเมจด้วย
@@ -136,13 +136,30 @@ public class MeleeHitbox : MonoBehaviour
                 // [เพิ่ม] เล่นเอฟเฟกต์ VFX ตอนตีโดน
                 if (profile.hitEffectPrefab != null)
                 {
-                    // เกิดตรงจุดที่ปะทะพอดี และหันหน้าไปทางทิศทางกระเด็น
-                    GameObject vfx = Instantiate(profile.hitEffectPrefab, info.hitPoint, Quaternion.LookRotation(knockbackDir));
+                    // [ปรับแก้] สร้างเอฟเฟกต์ที่ตำแหน่ง Hitbox และบังคับให้หันหน้าไปทางเดียวกับตัวละคร (Attacker)
+                    GameObject vfx = Instantiate(profile.hitEffectPrefab, attackPoint.position, attackerBody.rotation);
                     
                     // ปรับขนาดของเอฟเฟกต์ตามที่ตั้งไว้ใน Profile
                     if (profile.hitEffectScale != 1f)
                     {
                         vfx.transform.localScale = Vector3.one * profile.hitEffectScale;
+                    }
+
+                    // ปรับความเร็วการเล่นของเอฟเฟกต์ (ทั้ง Particle และ Animator)
+                    if (profile.hitEffectSpeed != 1f)
+                    {
+                        ParticleSystem[] particles = vfx.GetComponentsInChildren<ParticleSystem>();
+                        for (int p = 0; p < particles.Length; p++)
+                        {
+                            var main = particles[p].main;
+                            main.simulationSpeed = profile.hitEffectSpeed;
+                        }
+
+                        Animator[] animators = vfx.GetComponentsInChildren<Animator>();
+                        for (int a = 0; a < animators.Length; a++)
+                        {
+                            animators[a].speed = profile.hitEffectSpeed;
+                        }
                     }
                 }
 

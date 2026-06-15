@@ -26,4 +26,7 @@ public class HitboxProfile : ScriptableObject
     
     [Tooltip("ตัวคูณขนาดของเอฟเฟกต์ (1 = ขนาดปกติ, 0.5 = เล็กลงครึ่งนึง, 2 = ใหญ่เป็นสองเท่า)")]
     public float hitEffectScale = 1f;
+
+    [Tooltip("ความเร็วในการเล่นเอฟเฟกต์ (1 = ปกติ, 2 = เร็วขึ้นสองเท่า, 0.5 = สโลว์โมชั่น)")]
+    public float hitEffectSpeed = 1f;
 }
