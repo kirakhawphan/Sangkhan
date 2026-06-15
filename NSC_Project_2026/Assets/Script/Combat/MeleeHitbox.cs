@@ -136,8 +136,8 @@ public class MeleeHitbox : MonoBehaviour
                 // [เพิ่ม] เล่นเอฟเฟกต์ VFX ตอนตีโดน
                 if (profile.hitEffectPrefab != null)
                 {
-                    // [ปรับแก้] สร้างเอฟเฟกต์ที่ตำแหน่ง Hitbox และบังคับให้หันหน้าไปทางเดียวกับตัวละคร (Attacker)
-                    GameObject vfx = Instantiate(profile.hitEffectPrefab, attackPoint.position, attackerBody.rotation);
+                    // [ปรับแก้] เรียกใช้ผ่านระบบ Object Pool (Zero GC) แทนการใช้ Instantiate ธรรมดา
+                    GameObject vfx = VFXPool.Instance.Spawn(profile.hitEffectPrefab, attackPoint.position, attackerBody.rotation);
                     
                     // ปรับขนาดของเอฟเฟกต์ตามที่ตั้งไว้ใน Profile
                     if (profile.hitEffectScale != 1f)

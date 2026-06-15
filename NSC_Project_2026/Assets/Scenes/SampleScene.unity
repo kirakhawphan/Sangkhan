@@ -3618,6 +3618,10 @@ PrefabInstance:
       value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 6259341370183513764, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
+      propertyPath: lightAttackLockTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6259341370183513764, guid: e684c78df52da454d8df9a36b262a2b6, type: 3}
       propertyPath: finishAttackLockTime
       value: 0.8
       objectReference: {fileID: 0}
