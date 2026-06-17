@@ -29,6 +29,8 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private float blockSpeedMultiplier = 0.5f;
     [SerializeField] private float jumpHeight = 1.5f;
     [SerializeField] private float gravity = -9.81f;
+    [Tooltip("ระยะห่างจากพื้นที่จะเริ่มเล่นท่า Land ล่วงหน้า (ยิ่งสูง = เล่นท่าเร็วขึ้น)")]
+    [SerializeField] private float landPredictionHeight = 1.5f;
     [SerializeField] private float turnSmoothTime = 0.1f;
     
     [Header("Camera Control")]
@@ -73,6 +75,8 @@ public class Playermovement : MonoBehaviour
     private readonly int inputYHash = Animator.StringToHash("InputY");
     private readonly int isGroundedHash = Animator.StringToHash("IsGrounded");
     private readonly int jumpHash = Animator.StringToHash("Jump");
+    private readonly int velocityYHash = Animator.StringToHash("VelocityY");
+    private readonly int nearGroundHash = Animator.StringToHash("NearGround");
 
     private bool wasSprinting = false; // ตัวแปรสำหรับเช็คสถานะการวิ่ง เพื่อลดการประมวลผลซ้ำ
 
@@ -369,9 +373,22 @@ public class Playermovement : MonoBehaviour
             wasSprinting = isSprintingNow;
         }
 
+        // [เพิ่ม] ระบบทำนายการลงพื้น (Predictive Landing)
+        bool nearGround = false;
+        if (!isGrounded && velocity.y < 0f)
+        {
+            // ยิง Raycast ลงพื้นเฉพาะตอนกำลังตก เพื่อเช็คว่าใกล้พื้นหรือยัง
+            if (Physics.Raycast(transform.position, Vector3.down, landPredictionHeight, groundMask))
+            {
+                nearGround = true;
+            }
+        }
+
         if (animator != null)
         {
             animator.SetBool(isGroundedHash, isGrounded);
+            animator.SetFloat(velocityYHash, velocity.y);
+            animator.SetBool(nearGroundHash, nearGround);
         }
 
         // 3. ระบบกระโดด (รับค่าเฉพาะตอนถูกสิง + ห้ามกระโดดขณะโจมตีและหลบ)
