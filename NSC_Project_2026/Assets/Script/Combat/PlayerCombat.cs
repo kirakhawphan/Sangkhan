@@ -394,6 +394,7 @@ public class PlayerCombat : MonoBehaviour
 
     public void BufferHeavyAttack()
     {
+        Debug.Log("[PlayerCombat] BufferHeavyAttack() called via Right Click!");
         currentBufferTimer = inputBufferTime;
         isHeavyAttackingBuffer = true;
     }
@@ -445,6 +446,7 @@ public class PlayerCombat : MonoBehaviour
         // แยก Trigger ตามคลิกซ้าย/ขวา (สไตล์ DMC State-to-State)
         if (isHeavy)
         {
+            Debug.Log($"[PlayerCombat] Executing Heavy Attack! Setting Trigger 'HeavyAttack', ComboStep: {currentComboStep}");
             currentAnimator.SetTrigger(HashHeavyAttack);
         }
         else
@@ -466,7 +468,10 @@ public class PlayerCombat : MonoBehaviour
         {
             currentAttackCooldownTimer = isHeavy ? heavyAttackCooldown : lightAttackCooldown;
             currentMovementLockTimer = isHeavy ? heavyAttackLockTime : lightAttackLockTime;
-            comboTimer = lightComboResetTime;
+            
+            // [แก้ไข] เอา Cooldown มาบวกกับเวลา Reset คอมโบด้วย 
+            // เพื่อไม่ให้คอมโบหลุดระหว่างง้างหมัดหนัก (ที่กินเวลานานกว่าหมัดเบา)
+            comboTimer = currentAttackCooldownTimer + lightComboResetTime;
         }
 
         // Trigger Event สำหรับสคริปต์ภายนอก
